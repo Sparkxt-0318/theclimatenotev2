@@ -2,14 +2,17 @@
   "name": "theclimatenote",
   "private": true,
   "version": "0.1.0",
-  "description": "The Climate Note — weekly climate newsletter, iOS app + backend",
+  "description": "The Climate Note \u2014 weekly climate newsletter, iOS app + backend",
   "packageManager": "pnpm@9.12.0",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "lint": "pnpm -r --if-present lint",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
-    "check": "pnpm lint && pnpm typecheck && pnpm test"
+    "check": "pnpm lint && pnpm typecheck && pnpm test",
+    "db:test": "bash supabase/tests/run.sh"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
