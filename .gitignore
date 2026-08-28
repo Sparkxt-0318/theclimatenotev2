@@ -41,3 +41,6 @@ Thumbs.db
 npm-debug.log*
 coverage/
 .vercel
+
+# EAS submit credentials
+apps/mobile/private/

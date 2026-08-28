@@ -49,7 +49,7 @@ export type ImpactFactor = {
  * Keys are stable identifiers — reflection options reference them, so renaming
  * one orphans historical data. Add new keys instead.
  */
-export const IMPACT_FACTORS = [
+const FACTOR_LITERALS = [
   // ── Food ────────────────────────────────────────────────────────────────
   {
     key: 'meal.beef_to_plant',
@@ -328,7 +328,16 @@ export const IMPACT_FACTORS = [
   },
 ] as const satisfies readonly ImpactFactor[];
 
-export type ImpactFactorKey = (typeof IMPACT_FACTORS)[number]['key'];
+/**
+ * Keys stay literal (so `ImpactFactorKey` is a precise union and the AI schema
+ * can enumerate them), while the exported array is widened to `ImpactFactor[]`.
+ * Without the widening, optional fields like `gridDependent` are absent from
+ * the union type for any factor that does not set them, and reading one fails
+ * to compile at every call site.
+ */
+export type ImpactFactorKey = (typeof FACTOR_LITERALS)[number]['key'];
+
+export const IMPACT_FACTORS: readonly ImpactFactor[] = FACTOR_LITERALS;
 
 const BY_KEY = new Map<string, ImpactFactor>(IMPACT_FACTORS.map((f) => [f.key, f]));
 
