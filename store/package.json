@@ -7,7 +7,8 @@
     "screenshots": "tsx screenshots/generate.ts",
     "icon": "tsx icon/generate.ts",
     "typecheck": "tsc --noEmit",
-    "preflight": "tsx preflight.ts"
+    "preflight": "tsx preflight.ts",
+    "preview": "tsx preview/generate.ts"
   },
   "dependencies": {
     "@climatenote/shared": "workspace:*"

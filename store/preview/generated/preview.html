@@ -1,0 +1,1013 @@
+<title>The Climate Note Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Instrument+Sans:wght@400;500;600&display=swap">
+
+<style>
+  /* ── Tokens ──────────────────────────────────────────────────────────────
+     Sampled from the app's own palette (packages/shared/src/theme/colors.ts):
+     the sage is the notebook in the logo, the slate is the wordmark. Neutrals
+     carry the wordmark's cool cast rather than a default grey. */
+  :root {
+    --sage:        #A6C49F;
+    --sage-deep:   #4A783F;
+    --sage-darker: #396130;
+    --sage-wash:   #F4F7F3;
+
+    --ground:      #F9F9FA;
+    --panel:       #FFFFFF;
+    --ink:         #2C3134;
+    --ink-soft:    #515B61;
+    --ink-faint:   #6B7981;
+    --rule:        #DFE3E5;
+
+    --display: 'Newsreader', Georgia, serif;
+    --ui: 'Instrument Sans', system-ui, -apple-system, sans-serif;
+
+    --shell: min(1180px, 100% - 2.5rem);
+    --device-shell: linear-gradient(160deg, #cdd3d6, #9aa4a9 40%, #c6ccd0);
+    --on-sage: #FFFFFF;
+  }
+
+  /* Standard form rather than CSS nesting: the un-stamped "system" state is
+     what most viewers get, and nesting support is not worth risking here. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:    #101315;
+      --panel:     #1A1E21;
+      --ink:       #EDF0F1;
+      --ink-soft:  #A9B3B8;
+      --ink-faint: #7E888D;
+      --rule:      #2B3235;
+      --sage-wash: rgba(166, 196, 159, 0.10);
+      --sage-deep: #A6C49F;
+      --sage-darker: #CBDCC7;
+      --device-shell: linear-gradient(160deg, #4a5257, #23292c 40%, #3c4347);
+      --on-sage: #0F1A0C;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:    #101315;
+    --panel:     #1A1E21;
+    --ink:       #EDF0F1;
+    --ink-soft:  #A9B3B8;
+    --ink-faint: #7E888D;
+    --rule:      #2B3235;
+    --sage-wash: rgba(166, 196, 159, 0.10);
+    --sage-deep: #A6C49F;
+    --sage-darker: #CBDCC7;
+    --device-shell: linear-gradient(160deg, #4a5257, #23292c 40%, #3c4347);
+    --on-sage: #0F1A0C;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--ui);
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .shell { width: var(--shell); margin: 0 auto; }
+
+  /* ── Masthead ─────────────────────────────────────────────────────────── */
+  header { padding: 3.5rem 0 2rem; }
+
+  .mark {
+    display: flex; align-items: center; gap: 0.75rem;
+    font-family: var(--ui); font-size: 0.72rem; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--sage-deep);
+  }
+  .mark::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
+
+  h1 {
+    font-family: var(--display);
+    font-size: clamp(2.1rem, 6vw, 3.4rem);
+    font-weight: 500;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    margin: 1.25rem 0 0.75rem;
+    text-wrap: balance;
+  }
+
+  .standfirst {
+    max-width: 54ch; margin: 0; color: var(--ink-soft); font-size: 1.05rem;
+  }
+
+  .caveat {
+    margin: 1.5rem 0 0; padding: 0.85rem 1.1rem;
+    border-left: 2px solid var(--sage);
+    background: var(--sage-wash);
+    max-width: 60ch; font-size: 0.9rem; color: var(--ink-soft);
+    border-radius: 0 6px 6px 0;
+  }
+  .caveat strong { color: var(--ink); font-weight: 600; }
+
+  /* ── Screen picker ────────────────────────────────────────────────────── */
+  nav {
+    display: flex; gap: 0.4rem; flex-wrap: wrap;
+    padding: 2rem 0 1.5rem;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 2.5rem;
+  }
+
+  nav button {
+    font: inherit; font-size: 0.84rem; font-weight: 500;
+    padding: 0.42rem 0.85rem;
+    border: 1px solid var(--rule); border-radius: 999px;
+    background: transparent; color: var(--ink-soft);
+    cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  nav button:hover { border-color: var(--sage); color: var(--ink); }
+  nav button[aria-selected="true"] {
+    background: var(--sage-deep); border-color: var(--sage-deep); color: var(--panel);
+  }
+  nav button[aria-selected="true"] { color: var(--on-sage); }
+
+  /* ── Stage ────────────────────────────────────────────────────────────── */
+  .stage {
+    display: grid;
+    grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 4.5rem);
+    align-items: start;
+    padding-bottom: 5rem;
+  }
+  @media (max-width: 860px) {
+    .stage { grid-template-columns: 1fr; justify-items: center; }
+    .commentary { max-width: 46ch; }
+    /* The device is the point of the page; on a phone it should not sit two
+       screens below a preamble. */
+    .device { position: static; }
+  }
+
+  @media (max-width: 640px) {
+    :root { --shell: min(1180px, 100% - 2rem); }
+    header { padding: 2rem 0 1.25rem; }
+    .standfirst { font-size: 0.98rem; }
+    .caveat { margin-top: 1rem; padding: 0.7rem 0.9rem; font-size: 0.85rem; }
+    nav { padding: 1.25rem 0 1rem; margin-bottom: 1.5rem; gap: 0.35rem; }
+    nav button { font-size: 0.79rem; padding: 0.36rem 0.7rem; }
+    .stage { gap: 1.75rem; }
+  }
+
+  /* The device. Its screen renders at the app's real logical size and is
+     scaled down, so type and spacing keep their true proportions. */
+  .device {
+    position: sticky; top: 2rem;
+    width: 100%; max-width: 360px;
+    aspect-ratio: 440 / 956;
+    border-radius: 44px;
+    padding: 6px;
+    background: var(--device-shell);
+    box-shadow: 0 30px 60px -20px rgba(16, 22, 24, 0.45), 0 2px 6px rgba(16, 22, 24, 0.18);
+  }
+  :root[data-theme="dark"] .device { background: var(--device-shell); }
+
+  .viewport {
+    position: relative; width: 100%; height: 100%;
+    border-radius: 38px; overflow: hidden; background: #fff;
+  }
+
+  .screen {
+    position: absolute; inset: 0;
+    width: 440px; height: 956px;
+    transform-origin: top left;
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.28s ease;
+  }
+  .screen[data-active="true"] { opacity: 1; visibility: visible; }
+
+  /* The app's own tab bar is live: tapping it switches screens, which is the
+     most honest interaction this preview can offer. */
+  .taphit {
+    position: absolute; bottom: 0; height: 84px; width: 33.333%;
+    background: transparent; border: 0; cursor: pointer; z-index: 5;
+  }
+  .taphit:focus-visible { outline: 2px solid var(--sage-deep); outline-offset: -4px; }
+
+  /* ── Commentary ───────────────────────────────────────────────────────── */
+  .commentary h2 {
+    font-family: var(--display); font-weight: 500;
+    font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.15;
+    letter-spacing: -0.015em; margin: 0 0 0.65rem; text-wrap: balance;
+  }
+  .commentary p { margin: 0 0 1.5rem; color: var(--ink-soft); max-width: 46ch; }
+
+  .facts { border-top: 1px solid var(--rule); padding-top: 1.5rem; }
+  .facts dl { display: grid; grid-template-columns: auto 1fr; gap: 0.5rem 1.25rem; margin: 0; }
+  .facts dt {
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink-faint); padding-top: 0.15rem;
+  }
+  .facts dd { margin: 0; font-size: 0.92rem; color: var(--ink-soft); }
+  .facts dd b { color: var(--ink); font-weight: 600; }
+
+  footer {
+    border-top: 1px solid var(--rule); padding: 2rem 0 4rem;
+    font-size: 0.86rem; color: var(--ink-faint); max-width: 62ch;
+  }
+  footer code {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 0.85em;
+    background: var(--sage-wash); color: var(--sage-darker);
+    padding: 0.12em 0.4em; border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition-duration: 0.01ms !important; }
+  }
+</style>
+
+<div class="shell">
+  <header>
+    <div class="mark">The Climate Note &middot; iOS</div>
+    <h1>Six screens, before there is a build.</h1>
+    <p class="standfirst">
+      The app's real screens, rendered from the same design tokens it compiles —
+      so the type, spacing and colour here are the app's, not an impression of them.
+    </p>
+    <p class="caveat">
+      <strong>This is a rendering, not the running app.</strong> No scrolling
+      physics, no haptics, no live data. It is here so you can judge layout and
+      colour today; the real thing needs a build.
+    </p>
+  </header>
+
+  <nav role="tablist" aria-label="App screens">
+    <button role="tab" data-target="01-feed" aria-selected="true">Read</button>
+    <button role="tab" data-target="02-reader" aria-selected="false">The article</button>
+    <button role="tab" data-target="03-summary" aria-selected="false">The short version</button>
+    <button role="tab" data-target="04-reflection" aria-selected="false">Write your climate note</button>
+    <button role="tab" data-target="05-impact" aria-selected="false">Impact</button>
+    <button role="tab" data-target="06-notes" aria-selected="false">Your notes</button>
+  </nav>
+
+  <div class="stage">
+    <div class="device">
+      <div class="viewport" id="viewport">
+        <div class="screen" id="01-feed" data-active="true"><div style="width:440px;height:956px;position:relative;overflow:hidden;
+                      background:#FFFFFF;font-family:-apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;color:#2C3134">
+    
+  <div style="height:54px;display:flex;align-items:flex-end;justify-content:space-between;
+              padding:0 32px 8px;font-family:-apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:15px;font-weight:600;color:#2C3134">
+    <span>9:41</span>
+    <span style="display:flex;gap:6px;align-items:center">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="#2C3134">
+        <rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/>
+        <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/>
+      </svg>
+      <svg width="17" height="12" viewBox="0 0 17 12" fill="#2C3134">
+        <path d="M8.5 11.5 1 4a10.6 10.6 0 0 1 15 0z" opacity="0.35"/>
+        <path d="M8.5 11.5 4.5 7.5a6 6 0 0 1 8 0z"/>
+      </svg>
+      <svg width="27" height="13" viewBox="0 0 27 13">
+        <rect x="0.5" y="0.5" width="22" height="12" rx="3.5" fill="none" stroke="#2C3134" opacity="0.4"/>
+        <rect x="2" y="2" width="17" height="9" rx="2" fill="#2C3134"/>
+        <path d="M24 4.5v4a2.4 2.4 0 0 0 0-4z" fill="#2C3134" opacity="0.4"/>
+      </svg>
+    </span>
+  </div>
+    <div style="padding:16px 20px 0">
+      <div style="font-size:32px;line-height:39px;letter-spacing:-0.4px;font-weight:700;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif">The Climate Note</div>
+      <div style="font-size:15px;line-height:20px;letter-spacing:-0.24px;font-weight:400;color:#515B61;margin-top:2px">This week</div>
+    </div>
+
+    <div style="padding:20px 20px 0">
+      <div style="border-radius:20px;overflow:hidden">
+  <div style="height:250px;position:relative;overflow:hidden;
+              background:linear-gradient(160deg, #396130 0%, #5C9050 45%, #A6C49F 100%)">
+    <div style="position:absolute;inset:0;opacity:0.22;
+                background:radial-gradient(circle at 25% 30%, #fff 0%, transparent 45%),
+                           radial-gradient(circle at 78% 68%, #fff 0%, transparent 40%)"></div>
+    <svg viewBox="0 0 440 340" style="position:absolute;bottom:-2px;left:0;width:100%;opacity:0.30">
+      <path d="M0 250 Q 70 200 140 232 T 290 214 T 440 244 L440 340 L0 340 Z" fill="#fff" opacity="0.30"/>
+      <path d="M0 285 Q 90 248 180 272 T 330 258 T 440 282 L440 340 L0 340 Z" fill="#fff" opacity="0.35"/>
+    </svg>
+  </div></div>
+      <div style="padding-top:16px">
+        <div style="display:flex;gap:12px;align-items:center">
+          <span style="font-size:12px;line-height:16px;letter-spacing:0.6px;font-weight:600;color:#4A783F">ISSUE 14</span>
+          <span style="font-size:12px;line-height:16px;letter-spacing:0px;font-weight:400;color:#6B7981">6 min read</span>
+        </div>
+        <div style="font-size:24px;line-height:31px;letter-spacing:-0.3px;font-weight:700;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif;margin-top:8px">The cows in the room</div>
+        <div style="font-size:16px;line-height:21px;letter-spacing:-0.32px;font-weight:400;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif;color:#515B61;margin-top:8px">Livestock takes up most of the world’s farmland and returns a fraction of its food. That gap is the story.</div>
+      </div>
+    </div>
+
+    <div style="font-size:12px;line-height:16px;letter-spacing:0.6px;font-weight:600;color:#6B7981;padding:30px 20px 10px">EARLIER ISSUES</div>
+    
+      <div style="display:flex;align-items:center;gap:16px;padding:14px 20px">
+        <div style="flex:1">
+          <div style="font-size:12px;line-height:16px;letter-spacing:0px;font-weight:400;color:#6B7981">17 Aug · 5 min</div>
+          <div style="font-size:20px;line-height:25px;letter-spacing:0.38px;font-weight:600;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif;margin-top:3px">The quiet return of the ozone hole</div>
+        </div>
+        <div style="width:70px;height:70px;border-radius:12px;overflow:hidden">
+  <div style="height:70px;position:relative;overflow:hidden;
+              background:linear-gradient(160deg, #396130 0%, #5C9050 45%, #A6C49F 100%)">
+    <div style="position:absolute;inset:0;opacity:0.22;
+                background:radial-gradient(circle at 25% 30%, #fff 0%, transparent 45%),
+                           radial-gradient(circle at 78% 68%, #fff 0%, transparent 40%)"></div>
+    <svg viewBox="0 0 440 340" style="position:absolute;bottom:-2px;left:0;width:100%;opacity:0.30">
+      <path d="M0 250 Q 70 200 140 232 T 290 214 T 440 244 L440 340 L0 340 Z" fill="#fff" opacity="0.30"/>
+      <path d="M0 285 Q 90 248 180 272 T 330 258 T 440 282 L440 340 L0 340 Z" fill="#fff" opacity="0.35"/>
+    </svg>
+  </div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;padding:14px 20px">
+        <div style="flex:1">
+          <div style="font-size:12px;line-height:16px;letter-spacing:0px;font-weight:400;color:#6B7981">10 Aug · 7 min</div>
+          <div style="font-size:20px;line-height:25px;letter-spacing:0.38px;font-weight:600;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif;margin-top:3px">Who actually pays for a heatwave</div>
+        </div>
+        <div style="width:70px;height:70px;border-radius:12px;overflow:hidden">
+  <div style="height:70px;position:relative;overflow:hidden;
+              background:linear-gradient(160deg, #396130 0%, #5C9050 45%, #A6C49F 100%)">
+    <div style="position:absolute;inset:0;opacity:0.22;
+                background:radial-gradient(circle at 25% 30%, #fff 0%, transparent 45%),
+                           radial-gradient(circle at 78% 68%, #fff 0%, transparent 40%)"></div>
+    <svg viewBox="0 0 440 340" style="position:absolute;bottom:-2px;left:0;width:100%;opacity:0.30">
+      <path d="M0 250 Q 70 200 140 232 T 290 214 T 440 244 L440 340 L0 340 Z" fill="#fff" opacity="0.30"/>
+      <path d="M0 285 Q 90 248 180 272 T 330 258 T 440 282 L440 340 L0 340 Z" fill="#fff" opacity="0.35"/>
+    </svg>
+  </div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;padding:14px 20px">
+        <div style="flex:1">
+          <div style="font-size:12px;line-height:16px;letter-spacing:0px;font-weight:400;color:#6B7981">3 Aug · 6 min</div>
+          <div style="font-size:20px;line-height:25px;letter-spacing:0.38px;font-weight:600;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif;margin-top:3px">Your phone has a water footprint</div>
+        </div>
+        <div style="width:70px;height:70px;border-radius:12px;overflow:hidden">
+  <div style="height:70px;position:relative;overflow:hidden;
+              background:linear-gradient(160deg, #396130 0%, #5C9050 45%, #A6C49F 100%)">
+    <div style="position:absolute;inset:0;opacity:0.22;
+                background:radial-gradient(circle at 25% 30%, #fff 0%, transparent 45%),
+                           radial-gradient(circle at 78% 68%, #fff 0%, transparent 40%)"></div>
+    <svg viewBox="0 0 440 340" style="position:absolute;bottom:-2px;left:0;width:100%;opacity:0.30">
+      <path d="M0 250 Q 70 200 140 232 T 290 214 T 440 244 L440 340 L0 340 Z" fill="#fff" opacity="0.30"/>
+      <path d="M0 285 Q 90 248 180 272 T 330 258 T 440 282 L440 340 L0 340 Z" fill="#fff" opacity="0.35"/>
+    </svg>
+  </div></div>
+      </div>
+    
+  <div style="position:absolute;bottom:0;left:0;right:0;height:84px;padding-top:10px;
+              background:#FFFFFF;border-top:0.5px solid #DFE3E5;display:flex">
+    
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px">
+        <div style="width:26px;height:26px;display:flex;flex-direction:column;justify-content:center;gap:4px">
+      <div style="height:2.2px;border-radius:2px;background:#4A783F;width:26px"></div>
+      <div style="height:2.2px;border-radius:2px;background:#4A783F;width:20px"></div>
+      <div style="height:2.2px;border-radius:2px;background:#4A783F;width:24px"></div></div>
+        <span style="font-family:-apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:11px;font-weight:500;color:#4A783F">Read</span>
+      </div>
+    
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px">
+        <div style="width:22px;height:22px;border-radius:7px;border:2.2px solid #6B7981;
+      display:flex;align-items:center;justify-content:center">
+      <div style="width:10px;height:5px;border-left:2.2px solid #6B7981;border-bottom:2.2px solid #6B7981;
+                  transform:rotate(-45deg);margin-top:-2px"></div></div>
+        <span style="font-family:-apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:11px;font-weight:500;color:#6B7981">Notes</span>
+      </div>
+    
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px">
+        <div style="width:24px;height:22px;display:flex;align-items:flex-end;gap:3px">
+      <div style="width:5px;height:8px;border-radius:2px;background:#6B7981"></div>
+      <div style="width:5px;height:14px;border-radius:2px;background:#6B7981"></div>
+      <div style="width:5px;height:20px;border-radius:2px;background:#6B7981"></div></div>
+        <span style="font-family:-apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:11px;font-weight:500;color:#6B7981">Impact</span>
+      </div>
+  </div></div></div>
+        <div class="screen" id="02-reader" data-active="false"><div style="width:440px;height:956px;position:relative;overflow:hidden;
+                      background:#FFFFFF;font-family:-apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;color:#2C3134">
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:#4A783F;width:38%"></div>
+    
+  <div style="height:300px;position:relative;overflow:hidden;
+              background:linear-gradient(160deg, #396130 0%, #5C9050 45%, #A6C49F 100%)">
+    <div style="position:absolute;inset:0;opacity:0.22;
+                background:radial-gradient(circle at 25% 30%, #fff 0%, transparent 45%),
+                           radial-gradient(circle at 78% 68%, #fff 0%, transparent 40%)"></div>
+    <svg viewBox="0 0 440 340" style="position:absolute;bottom:-2px;left:0;width:100%;opacity:0.30">
+      <path d="M0 250 Q 70 200 140 232 T 290 214 T 440 244 L440 340 L0 340 Z" fill="#fff" opacity="0.30"/>
+      <path d="M0 285 Q 90 248 180 272 T 330 258 T 440 282 L440 340 L0 340 Z" fill="#fff" opacity="0.35"/>
+    </svg>
+  </div>
+    <div style="position:absolute;top:60px;left:20px;width:36px;height:36px;border-radius:18px;
+                background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center">
+      <div style="width:10px;height:10px;border-left:2px solid #fff;border-bottom:2px solid #fff;
+                  transform:rotate(45deg);margin-left:3px"></div>
+    </div>
+
+    <div style="padding:24px 24px 0">
+      <div style="font-size:12px;line-height:16px;letter-spacing:0.6px;font-weight:600;color:#4A783F">ISSUE 14</div>
+      <div style="font-size:32px;line-height:39px;letter-spacing:-0.4px;font-weight:700;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif;margin-top:10px">The cows in the room</div>
+      <div style="font-size:19px;line-height:27px;letter-spacing:-0.2px;font-weight:400;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif;color:#515B61;margin-top:12px">Livestock takes up most of the world’s farmland and returns a fraction of its food. That gap is the story.</div>
+      <div style="font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#6B7981;margin-top:12px">24 August 2026 · 6 min read</div>
+
+      <div style="font-size:19px;line-height:31px;letter-spacing:0px;font-weight:400;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif;margin-top:26px">
+        Cattle farming is the single largest agricultural source of methane, a gas
+        that traps roughly 80 times more heat than carbon dioxide over its first
+        twenty years in the atmosphere.
+      </div>
+      <div style="font-size:19px;line-height:31px;letter-spacing:0px;font-weight:400;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif;margin-top:20px">
+        The scale is easy to miss from a supermarket aisle.
+      </div>
+    </div></div></div>
+        <div class="screen" id="03-summary" data-active="false"><div style="width:440px;height:956px;position:relative;overflow:hidden;
+                      background:#FFFFFF;font-family:-apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;color:#2C3134">
+    
+  <div style="height:54px;display:flex;align-items:flex-end;justify-content:space-between;
+              padding:0 32px 8px;font-family:-apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:15px;font-weight:600;color:#2C3134">
+    <span>9:41</span>
+    <span style="display:flex;gap:6px;align-items:center">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="#2C3134">
+        <rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/>
+        <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/>
+      </svg>
+      <svg width="17" height="12" viewBox="0 0 17 12" fill="#2C3134">
+        <path d="M8.5 11.5 1 4a10.6 10.6 0 0 1 15 0z" opacity="0.35"/>
+        <path d="M8.5 11.5 4.5 7.5a6 6 0 0 1 8 0z"/>
+      </svg>
+      <svg width="27" height="13" viewBox="0 0 27 13">
+        <rect x="0.5" y="0.5" width="22" height="12" rx="3.5" fill="none" stroke="#2C3134" opacity="0.4"/>
+        <rect x="2" y="2" width="17" height="9" rx="2" fill="#2C3134"/>
+        <path d="M24 4.5v4a2.4 2.4 0 0 0 0-4z" fill="#2C3134" opacity="0.4"/>
+      </svg>
+    </span>
+  </div>
+    <div style="padding:20px 24px 0">
+      <div style="font-size:19px;line-height:31px;letter-spacing:0px;font-weight:400;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif;color:#515B61">
+        …delivers most of the available benefit.
+      </div>
+    </div>
+
+    <div style="margin:28px 20px 0;padding:24px;
+                border-radius:20px;background:#F4F7F3">
+      <div style="font-size:12px;line-height:16px;letter-spacing:0.6px;font-weight:600;color:#4A783F">THE SHORT VERSION</div>
+
+      <div style="margin-top:20px">
+        <div style="font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#4A783F;font-weight:600;letter-spacing:0.4px">WHAT IS GOING WRONG</div>
+        <div style="font-size:16px;line-height:21px;letter-spacing:-0.32px;font-weight:400;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif;margin-top:6px">
+          Cows burp methane, a gas that heats the planet much faster than carbon
+          dioxide does. Raising them also takes up more than three quarters of all
+          farmland while producing less than a fifth of our food.
+        </div>
+      </div>
+
+      <div style="margin-top:20px">
+        <div style="font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#4A783F;font-weight:600;letter-spacing:0.4px">WHY IT MATTERS</div>
+        <div style="font-size:16px;line-height:21px;letter-spacing:-0.32px;font-weight:400;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif;margin-top:6px">
+          Land used for cattle is land not growing food or holding carbon in
+          forests. Methane also acts fast, so cutting it now slows warming within
+          our lifetimes rather than the next century.
+        </div>
+      </div>
+
+      <div style="margin-top:20px">
+        <div style="font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#4A783F;font-weight:600;letter-spacing:0.4px">WHAT CAN BE DONE</div>
+        
+          <div style="display:flex;gap:12px;margin-top:10px">
+            <div style="width:5px;height:5px;border-radius:3px;background:#4A783F;margin-top:9px;flex:none"></div>
+            <div style="font-size:16px;line-height:21px;letter-spacing:-0.32px;font-weight:400;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif">Swapping beef for chicken cuts a meal’s footprint by about 90%.</div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:10px">
+            <div style="width:5px;height:5px;border-radius:3px;background:#4A783F;margin-top:9px;flex:none"></div>
+            <div style="font-size:16px;line-height:21px;letter-spacing:-0.32px;font-weight:400;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif">Countries are starting to price farm emissions the way they price fuel.</div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:10px">
+            <div style="width:5px;height:5px;border-radius:3px;background:#4A783F;margin-top:9px;flex:none"></div>
+            <div style="font-size:16px;line-height:21px;letter-spacing:-0.32px;font-weight:400;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif">Eating what you already bought beats almost any shopping change.</div>
+          </div>
+      </div>
+
+      <div style="font-size:11px;line-height:13px;letter-spacing:0.07px;font-weight:400;color:#6B7981;margin-top:20px">
+        Summarised by AI from the article above, and checked by an editor before
+        publishing. The article itself is written by a person.
+      </div>
+    </div>
+
+    <div style="padding:34px 20px 0">
+      <div style="font-size:24px;line-height:31px;letter-spacing:-0.3px;font-weight:700;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif">Write your climate note!</div>
+      <div style="font-size:16px;line-height:21px;letter-spacing:-0.32px;font-weight:400;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif;color:#515B61;margin-top:8px">
+        Pick one thing to try this week. Small and specific beats big and vague.
+      </div>
+      <div style="margin-top:16px;border-radius:16px;padding:16px;
+                  border:1px solid #DFE3E5;background:#FFFFFF;display:flex;gap:12px">
+        <div style="width:22px;height:22px;border-radius:11px;flex:none;margin-top:2px;
+                    border:2px solid #C7CDD0"></div>
+        <div style="flex:1">
+          <div style="font-size:17px;line-height:22px;letter-spacing:-0.41px;font-weight:600;">Swap two beef meals for beans this week</div>
+        </div>
+      </div>
+    </div></div></div>
+        <div class="screen" id="04-reflection" data-active="false"><div style="width:440px;height:956px;position:relative;overflow:hidden;
+                      background:#FFFFFF;font-family:-apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;color:#2C3134">
+    
+  <div style="height:54px;display:flex;align-items:flex-end;justify-content:space-between;
+              padding:0 32px 8px;font-family:-apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:15px;font-weight:600;color:#2C3134">
+    <span>9:41</span>
+    <span style="display:flex;gap:6px;align-items:center">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="#2C3134">
+        <rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/>
+        <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/>
+      </svg>
+      <svg width="17" height="12" viewBox="0 0 17 12" fill="#2C3134">
+        <path d="M8.5 11.5 1 4a10.6 10.6 0 0 1 15 0z" opacity="0.35"/>
+        <path d="M8.5 11.5 4.5 7.5a6 6 0 0 1 8 0z"/>
+      </svg>
+      <svg width="27" height="13" viewBox="0 0 27 13">
+        <rect x="0.5" y="0.5" width="22" height="12" rx="3.5" fill="none" stroke="#2C3134" opacity="0.4"/>
+        <rect x="2" y="2" width="17" height="9" rx="2" fill="#2C3134"/>
+        <path d="M24 4.5v4a2.4 2.4 0 0 0 0-4z" fill="#2C3134" opacity="0.4"/>
+      </svg>
+    </span>
+  </div>
+    <div style="padding:18px 20px 0">
+      <div style="font-size:24px;line-height:31px;letter-spacing:-0.3px;font-weight:700;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif">Write your climate note!</div>
+      <div style="font-size:16px;line-height:21px;letter-spacing:-0.32px;font-weight:400;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif;color:#515B61;margin-top:8px">
+        Pick one thing to try this week. Small and specific beats big and vague.
+      </div>
+    </div>
+
+    <div style="padding:20px 20px 0;display:flex;flex-direction:column;gap:12px">
+      
+        <div style="border-radius:16px;padding:16px;display:flex;gap:12px;
+                    border:1px solid #4A783F;
+                    background:#F4F7F3">
+          
+    <div style="width:22px;height:22px;border-radius:11px;flex:none;margin-top:2px;
+                border:2px solid #4A783F;
+                display:flex;align-items:center;justify-content:center">
+      <div style="width:10px;height:10px;border-radius:5px;background:#4A783F"></div>
+    </div>
+          <div style="flex:1">
+            <div style="font-size:17px;line-height:22px;letter-spacing:-0.41px;font-weight:600;">Swap two beef meals for beans this week</div>
+            <div style="font-size:15px;line-height:20px;letter-spacing:-0.24px;font-weight:400;color:#515B61;margin-top:4px">Beef is about 99 kg of CO₂e per kilogram against under two for beans — the single biggest lever in your week.</div>
+            <div style="font-size:12px;line-height:16px;letter-spacing:0px;font-weight:400;color:#6B7981;margin-top:6px">Roughly 19.6 kg CO₂e over a week</div>
+          </div>
+        </div>
+        <div style="border-radius:16px;padding:16px;display:flex;gap:12px;
+                    border:1px solid #DFE3E5;
+                    background:#FFFFFF">
+          
+    <div style="width:22px;height:22px;border-radius:11px;flex:none;margin-top:2px;
+                border:2px solid #C7CDD0;
+                display:flex;align-items:center;justify-content:center">
+      
+    </div>
+          <div style="flex:1">
+            <div style="font-size:17px;line-height:22px;letter-spacing:-0.41px;font-weight:600;">Finish leftovers on three nights</div>
+            <div style="font-size:15px;line-height:20px;letter-spacing:-0.24px;font-weight:400;color:#515B61;margin-top:4px">Every wasted meal also wastes the land and water behind it.</div>
+            <div style="font-size:12px;line-height:16px;letter-spacing:0px;font-weight:400;color:#6B7981;margin-top:6px">Roughly 2.5 kg CO₂e over a week</div>
+          </div>
+        </div>
+        <div style="border-radius:16px;padding:16px;display:flex;gap:12px;
+                    border:1px solid #DFE3E5;
+                    background:#FFFFFF">
+          
+    <div style="width:22px;height:22px;border-radius:11px;flex:none;margin-top:2px;
+                border:2px solid #C7CDD0;
+                display:flex;align-items:center;justify-content:center">
+      
+    </div>
+          <div style="flex:1">
+            <div style="font-size:17px;line-height:22px;letter-spacing:-0.41px;font-weight:600;">Choose oat milk for a week of coffees</div>
+            <div style="font-size:15px;line-height:20px;letter-spacing:-0.24px;font-weight:400;color:#515B61;margin-top:4px">Dairy carries a share of the same land and methane cost the article describes.</div>
+            <div style="font-size:12px;line-height:16px;letter-spacing:0px;font-weight:400;color:#6B7981;margin-top:6px">Roughly 2.3 kg CO₂e over a week</div>
+          </div>
+        </div>
+
+      <div style="border-radius:16px;padding:16px;display:flex;gap:12px;
+                  border:1px solid #DFE3E5;background:#FFFFFF">
+        
+    <div style="width:22px;height:22px;border-radius:11px;flex:none;margin-top:2px;
+                border:2px solid #C7CDD0;
+                display:flex;align-items:center;justify-content:center">
+      
+    </div>
+        <div style="flex:1">
+          <div style="font-size:17px;line-height:22px;letter-spacing:-0.41px;font-weight:600;">Write my own</div>
+          <div style="font-size:15px;line-height:20px;letter-spacing:-0.24px;font-weight:400;color:#515B61;margin-top:4px">
+            Something else this article made you want to do.
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:8px;height:50px;border-radius:16px;background:#4A783F;
+                  display:flex;align-items:center;justify-content:center;
+                  font-size:17px;line-height:22px;letter-spacing:-0.41px;font-weight:600;color:#FFFFFF">Save my note</div>
+
+      <div style="margin-top:24px;padding-top:20px;border-top:0.5px solid #DFE3E5">
+        <div style="font-size:12px;line-height:16px;letter-spacing:0.6px;font-weight:600;color:#6B7981">ALSO PUBLISHED ON</div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <div style="border:1px solid #DFE3E5;border-radius:999px;
+                 padding:8px 16px;font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#4A783F">Instagram</div><div style="border:1px solid #DFE3E5;border-radius:999px;
+                 padding:8px 16px;font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#4A783F">Substack</div><div style="border:1px solid #DFE3E5;border-radius:999px;
+                 padding:8px 16px;font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#4A783F">Medium</div>
+        </div>
+      </div>
+    </div></div></div>
+        <div class="screen" id="05-impact" data-active="false"><div style="width:440px;height:956px;position:relative;overflow:hidden;
+                      background:#FFFFFF;font-family:-apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;color:#2C3134">
+    
+  <div style="height:54px;display:flex;align-items:flex-end;justify-content:space-between;
+              padding:0 32px 8px;font-family:-apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:15px;font-weight:600;color:#2C3134">
+    <span>9:41</span>
+    <span style="display:flex;gap:6px;align-items:center">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="#2C3134">
+        <rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/>
+        <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/>
+      </svg>
+      <svg width="17" height="12" viewBox="0 0 17 12" fill="#2C3134">
+        <path d="M8.5 11.5 1 4a10.6 10.6 0 0 1 15 0z" opacity="0.35"/>
+        <path d="M8.5 11.5 4.5 7.5a6 6 0 0 1 8 0z"/>
+      </svg>
+      <svg width="27" height="13" viewBox="0 0 27 13">
+        <rect x="0.5" y="0.5" width="22" height="12" rx="3.5" fill="none" stroke="#2C3134" opacity="0.4"/>
+        <rect x="2" y="2" width="17" height="9" rx="2" fill="#2C3134"/>
+        <path d="M24 4.5v4a2.4 2.4 0 0 0 0-4z" fill="#2C3134" opacity="0.4"/>
+      </svg>
+    </span>
+  </div>
+    <div style="padding:16px 20px 0">
+      <div style="font-size:32px;line-height:39px;letter-spacing:-0.4px;font-weight:700;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif">Your impact</div>
+    </div>
+
+    <div style="margin:20px 20px 0;padding:24px;
+                border-radius:20px;background:#F4F7F3">
+      <div style="font-size:12px;line-height:16px;letter-spacing:0.6px;font-weight:600;color:#4A783F">SAVED SO FAR</div>
+      <div style="font-size:38px;line-height:44px;font-weight:700;color:#4A783F;margin-top:6px">about 47 kg</div>
+      <div style="font-size:15px;line-height:20px;letter-spacing:-0.24px;font-weight:400;color:#515B61;margin-top:4px">
+        CO₂e across 23 actions — about 276 km not driven
+      </div>
+    </div>
+
+    <div style="padding:30px 20px 0">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <div style="font-size:20px;line-height:25px;letter-spacing:0.38px;font-weight:600;">This week</div>
+        <div style="font-size:15px;line-height:20px;letter-spacing:-0.24px;font-weight:400;color:#4A783F">5 day streak</div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;margin-top:16px">
+        
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1">
+            <div style="font-size:11px;line-height:13px;letter-spacing:0.07px;font-weight:400;color:#6B7981">M</div>
+            <div style="width:40px;height:40px;border-radius:12px;
+                        background:#437637;
+                        
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#FFFFFF">18</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1">
+            <div style="font-size:11px;line-height:13px;letter-spacing:0.07px;font-weight:400;color:#6B7981">T</div>
+            <div style="width:40px;height:40px;border-radius:12px;
+                        background:#65A257;
+                        
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#FFFFFF">19</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1">
+            <div style="font-size:11px;line-height:13px;letter-spacing:0.07px;font-weight:400;color:#6B7981">W</div>
+            <div style="width:40px;height:40px;border-radius:12px;
+                        background:#437637;
+                        
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#FFFFFF">20</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1">
+            <div style="font-size:11px;line-height:13px;letter-spacing:0.07px;font-weight:400;color:#6B7981">T</div>
+            <div style="width:40px;height:40px;border-radius:12px;
+                        background:#A3C59B;
+                        
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#515B61">21</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1">
+            <div style="font-size:11px;line-height:13px;letter-spacing:0.07px;font-weight:400;color:#6B7981">F</div>
+            <div style="width:40px;height:40px;border-radius:12px;
+                        background:#437637;
+                        
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#FFFFFF">22</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1">
+            <div style="font-size:11px;line-height:13px;letter-spacing:0.07px;font-weight:400;color:#6B7981">S</div>
+            <div style="width:40px;height:40px;border-radius:12px;
+                        background:#F0F2F0;
+                        
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#515B61">23</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;flex:1">
+            <div style="font-size:11px;line-height:13px;letter-spacing:0.07px;font-weight:400;color:#6B7981">S</div>
+            <div style="width:40px;height:40px;border-radius:12px;
+                        background:#65A257;
+                        border:2px solid #4A783F;
+                        display:flex;align-items:center;justify-content:center;
+                        font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#FFFFFF">24</div>
+          </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:4px;justify-content:flex-end;margin-top:12px">
+        <span style="font-size:11px;line-height:13px;letter-spacing:0.07px;font-weight:400;color:#6B7981">Less</span>
+        <div style="width:12px;height:12px;border-radius:3px;background:#F0F2F0"></div><div style="width:12px;height:12px;border-radius:3px;background:#D2E1CE"></div><div style="width:12px;height:12px;border-radius:3px;background:#A3C59B"></div><div style="width:12px;height:12px;border-radius:3px;background:#65A257"></div><div style="width:12px;height:12px;border-radius:3px;background:#437637"></div>
+        <span style="font-size:11px;line-height:13px;letter-spacing:0.07px;font-weight:400;color:#6B7981">More</span>
+      </div>
+    </div>
+
+    <div style="padding:30px 20px 0">
+      <div style="font-size:20px;line-height:25px;letter-spacing:0.38px;font-weight:600;">Where it came from</div>
+      <div style="margin-top:16px;display:flex;flex-direction:column;gap:16px">
+        
+          <div>
+            <div style="display:flex;justify-content:space-between">
+              <span style="font-size:15px;line-height:20px;letter-spacing:-0.24px;font-weight:400;">Food</span>
+              <span style="font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#6B7981">34 kg</span>
+            </div>
+            <div style="height:8px;border-radius:4px;background:#EFF1F2;margin-top:8px;overflow:hidden">
+              <div style="height:8px;border-radius:4px;width:100%;background:#4A783F"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between">
+              <span style="font-size:15px;line-height:20px;letter-spacing:-0.24px;font-weight:400;">Getting around</span>
+              <span style="font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#6B7981">9 kg</span>
+            </div>
+            <div style="height:8px;border-radius:4px;background:#EFF1F2;margin-top:8px;overflow:hidden">
+              <div style="height:8px;border-radius:4px;width:27%;background:#216C9E"></div>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between">
+              <span style="font-size:15px;line-height:20px;letter-spacing:-0.24px;font-weight:400;">Waste</span>
+              <span style="font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#6B7981">4 kg</span>
+            </div>
+            <div style="height:8px;border-radius:4px;background:#EFF1F2;margin-top:8px;overflow:hidden">
+              <div style="height:8px;border-radius:4px;width:12%;background:#AA7409"></div>
+            </div>
+          </div>
+      </div>
+    </div>
+    
+  <div style="position:absolute;bottom:0;left:0;right:0;height:84px;padding-top:10px;
+              background:#FFFFFF;border-top:0.5px solid #DFE3E5;display:flex">
+    
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px">
+        <div style="width:26px;height:26px;display:flex;flex-direction:column;justify-content:center;gap:4px">
+      <div style="height:2.2px;border-radius:2px;background:#6B7981;width:26px"></div>
+      <div style="height:2.2px;border-radius:2px;background:#6B7981;width:20px"></div>
+      <div style="height:2.2px;border-radius:2px;background:#6B7981;width:24px"></div></div>
+        <span style="font-family:-apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:11px;font-weight:500;color:#6B7981">Read</span>
+      </div>
+    
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px">
+        <div style="width:22px;height:22px;border-radius:7px;border:2.2px solid #6B7981;
+      display:flex;align-items:center;justify-content:center">
+      <div style="width:10px;height:5px;border-left:2.2px solid #6B7981;border-bottom:2.2px solid #6B7981;
+                  transform:rotate(-45deg);margin-top:-2px"></div></div>
+        <span style="font-family:-apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:11px;font-weight:500;color:#6B7981">Notes</span>
+      </div>
+    
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px">
+        <div style="width:24px;height:22px;display:flex;align-items:flex-end;gap:3px">
+      <div style="width:5px;height:8px;border-radius:2px;background:#4A783F"></div>
+      <div style="width:5px;height:14px;border-radius:2px;background:#4A783F"></div>
+      <div style="width:5px;height:20px;border-radius:2px;background:#4A783F"></div></div>
+        <span style="font-family:-apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:11px;font-weight:500;color:#4A783F">Impact</span>
+      </div>
+  </div></div></div>
+        <div class="screen" id="06-notes" data-active="false"><div style="width:440px;height:956px;position:relative;overflow:hidden;
+                      background:#FFFFFF;font-family:-apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;color:#2C3134">
+    
+  <div style="height:54px;display:flex;align-items:flex-end;justify-content:space-between;
+              padding:0 32px 8px;font-family:-apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:15px;font-weight:600;color:#2C3134">
+    <span>9:41</span>
+    <span style="display:flex;gap:6px;align-items:center">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="#2C3134">
+        <rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/>
+        <rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/>
+      </svg>
+      <svg width="17" height="12" viewBox="0 0 17 12" fill="#2C3134">
+        <path d="M8.5 11.5 1 4a10.6 10.6 0 0 1 15 0z" opacity="0.35"/>
+        <path d="M8.5 11.5 4.5 7.5a6 6 0 0 1 8 0z"/>
+      </svg>
+      <svg width="27" height="13" viewBox="0 0 27 13">
+        <rect x="0.5" y="0.5" width="22" height="12" rx="3.5" fill="none" stroke="#2C3134" opacity="0.4"/>
+        <rect x="2" y="2" width="17" height="9" rx="2" fill="#2C3134"/>
+        <path d="M24 4.5v4a2.4 2.4 0 0 0 0-4z" fill="#2C3134" opacity="0.4"/>
+      </svg>
+    </span>
+  </div>
+    <div style="padding:16px 20px 0">
+      <div style="font-size:32px;line-height:39px;letter-spacing:-0.4px;font-weight:700;font-family:'Iowan Old Style', Georgia, 'Times New Roman', serif">Your notes</div>
+      <div style="font-size:15px;line-height:20px;letter-spacing:-0.24px;font-weight:400;color:#515B61;margin-top:2px">
+        Tap to check something off for today.
+      </div>
+    </div>
+
+    <div style="padding:20px 20px 0;display:flex;flex-direction:column;gap:12px">
+      
+        <div style="border-radius:16px;padding:16px;display:flex;gap:16px;
+                    border:1px solid #4A783F;
+                    background:#F4F7F3">
+          <div style="width:26px;height:26px;border-radius:13px;flex:none;margin-top:2px;
+                      border:2px solid #4A783F;
+                      background:#4A783F;
+                      display:flex;align-items:center;justify-content:center">
+            <div style="width:11px;height:6px;border-left:2px solid #FFFFFF;
+                     border-bottom:2px solid #FFFFFF;transform:rotate(-45deg);margin-top:-3px"></div>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:17px;line-height:22px;letter-spacing:-0.41px;font-weight:600;">Swap two beef meals for beans this week</div>
+            <div style="font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#6B7981;margin-top:4px">From “The cows in the room”</div>
+            <div style="font-size:12px;line-height:16px;letter-spacing:0px;font-weight:400;color:#4A783F;margin-top:4px">Done 5 times</div>
+          </div>
+        </div>
+        <div style="border-radius:16px;padding:16px;display:flex;gap:16px;
+                    border:1px solid #4A783F;
+                    background:#F4F7F3">
+          <div style="width:26px;height:26px;border-radius:13px;flex:none;margin-top:2px;
+                      border:2px solid #4A783F;
+                      background:#4A783F;
+                      display:flex;align-items:center;justify-content:center">
+            <div style="width:11px;height:6px;border-left:2px solid #FFFFFF;
+                     border-bottom:2px solid #FFFFFF;transform:rotate(-45deg);margin-top:-3px"></div>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:17px;line-height:22px;letter-spacing:-0.41px;font-weight:600;">Walk the short trip to school on three days</div>
+            <div style="font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#6B7981;margin-top:4px">From “Who actually pays for a heatwave”</div>
+            <div style="font-size:12px;line-height:16px;letter-spacing:0px;font-weight:400;color:#4A783F;margin-top:4px">Done 3 times</div>
+          </div>
+        </div>
+        <div style="border-radius:16px;padding:16px;display:flex;gap:16px;
+                    border:1px solid #DFE3E5;
+                    background:#FFFFFF">
+          <div style="width:26px;height:26px;border-radius:13px;flex:none;margin-top:2px;
+                      border:2px solid #C7CDD0;
+                      background:transparent;
+                      display:flex;align-items:center;justify-content:center">
+            
+          </div>
+          <div style="flex:1">
+            <div style="font-size:17px;line-height:22px;letter-spacing:-0.41px;font-weight:600;">Refill a bottle instead of buying one</div>
+            <div style="font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#6B7981;margin-top:4px">From “Your phone has a water footprint”</div>
+            <div style="font-size:12px;line-height:16px;letter-spacing:0px;font-weight:400;color:#4A783F;margin-top:4px">Done 8 times</div>
+          </div>
+        </div>
+        <div style="border-radius:16px;padding:16px;display:flex;gap:16px;
+                    border:1px solid #DFE3E5;
+                    background:#FFFFFF">
+          <div style="width:26px;height:26px;border-radius:13px;flex:none;margin-top:2px;
+                      border:2px solid #C7CDD0;
+                      background:transparent;
+                      display:flex;align-items:center;justify-content:center">
+            
+          </div>
+          <div style="flex:1">
+            <div style="font-size:17px;line-height:22px;letter-spacing:-0.41px;font-weight:600;">Finish leftovers on three nights</div>
+            <div style="font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#6B7981;margin-top:4px">From “The cows in the room”</div>
+            <div style="font-size:12px;line-height:16px;letter-spacing:0px;font-weight:400;color:#4A783F;margin-top:4px">Done 1 times</div>
+          </div>
+        </div>
+        <div style="border-radius:16px;padding:16px;display:flex;gap:16px;
+                    border:1px solid #4A783F;
+                    background:#F4F7F3">
+          <div style="width:26px;height:26px;border-radius:13px;flex:none;margin-top:2px;
+                      border:2px solid #4A783F;
+                      background:#4A783F;
+                      display:flex;align-items:center;justify-content:center">
+            <div style="width:11px;height:6px;border-left:2px solid #FFFFFF;
+                     border-bottom:2px solid #FFFFFF;transform:rotate(-45deg);margin-top:-3px"></div>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:17px;line-height:22px;letter-spacing:-0.41px;font-weight:600;">Take the bus twice instead of a lift</div>
+            <div style="font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#6B7981;margin-top:4px">From “Who actually pays for a heatwave”</div>
+            <div style="font-size:12px;line-height:16px;letter-spacing:0px;font-weight:400;color:#4A783F;margin-top:4px">Done 4 times</div>
+          </div>
+        </div>
+        <div style="border-radius:16px;padding:16px;display:flex;gap:16px;
+                    border:1px solid #DFE3E5;
+                    background:#FFFFFF">
+          <div style="width:26px;height:26px;border-radius:13px;flex:none;margin-top:2px;
+                      border:2px solid #C7CDD0;
+                      background:transparent;
+                      display:flex;align-items:center;justify-content:center">
+            
+          </div>
+          <div style="flex:1">
+            <div style="font-size:17px;line-height:22px;letter-spacing:-0.41px;font-weight:600;">Air-dry one wash instead of tumble drying</div>
+            <div style="font-size:13px;line-height:18px;letter-spacing:-0.08px;font-weight:400;color:#6B7981;margin-top:4px">From “The quiet return of the ozone hole”</div>
+            <div style="font-size:12px;line-height:16px;letter-spacing:0px;font-weight:400;color:#4A783F;margin-top:4px">Done 2 times</div>
+          </div>
+        </div>
+    </div>
+    
+  <div style="position:absolute;bottom:0;left:0;right:0;height:84px;padding-top:10px;
+              background:#FFFFFF;border-top:0.5px solid #DFE3E5;display:flex">
+    
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px">
+        <div style="width:26px;height:26px;display:flex;flex-direction:column;justify-content:center;gap:4px">
+      <div style="height:2.2px;border-radius:2px;background:#6B7981;width:26px"></div>
+      <div style="height:2.2px;border-radius:2px;background:#6B7981;width:20px"></div>
+      <div style="height:2.2px;border-radius:2px;background:#6B7981;width:24px"></div></div>
+        <span style="font-family:-apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:11px;font-weight:500;color:#6B7981">Read</span>
+      </div>
+    
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px">
+        <div style="width:22px;height:22px;border-radius:7px;border:2.2px solid #4A783F;
+      display:flex;align-items:center;justify-content:center">
+      <div style="width:10px;height:5px;border-left:2.2px solid #4A783F;border-bottom:2.2px solid #4A783F;
+                  transform:rotate(-45deg);margin-top:-2px"></div></div>
+        <span style="font-family:-apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:11px;font-weight:500;color:#4A783F">Notes</span>
+      </div>
+    
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px">
+        <div style="width:24px;height:22px;display:flex;align-items:flex-end;gap:3px">
+      <div style="width:5px;height:8px;border-radius:2px;background:#6B7981"></div>
+      <div style="width:5px;height:14px;border-radius:2px;background:#6B7981"></div>
+      <div style="width:5px;height:20px;border-radius:2px;background:#6B7981"></div></div>
+        <span style="font-family:-apple-system, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:11px;font-weight:500;color:#6B7981">Impact</span>
+      </div>
+  </div></div></div>
+        <button class="taphit" style="left: 0"        data-tab="read"   aria-label="Read tab"></button>
+        <button class="taphit" style="left: 33.333%"  data-tab="notes"  aria-label="Notes tab"></button>
+        <button class="taphit" style="left: 66.666%"  data-tab="impact" aria-label="Impact tab"></button>
+      </div>
+    </div>
+
+    <div class="commentary">
+      <h2 id="screen-name">Read</h2>
+      <p id="screen-note">The weekly issue leads; the archive runs beneath it. No account needed to get this far — that is deliberate, and it is what App Review checks.</p>
+
+      <div class="facts">
+        <dl>
+          <dt>Reading</dt>
+          <dd>Free, no account. Signing in only saves what you commit to.</dd>
+          <dt>Sign-in</dt>
+          <dd>Native Apple and Google sheets — <b>the app never opens Safari</b>, which is what the last submission was rejected for.</dd>
+          <dt>Numbers</dt>
+          <dd>From published sources with stated assumptions. Where a figure cannot be defended, the app shows none.</dd>
+          <dt>Palette</dt>
+          <dd>Sage <b>#A6C49F</b> from the notebook, slate <b>#3B4347</b> from the wordmark.</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Tap the tab bar inside the phone, or the buttons above. To run the real app
+    on sample data with no backend: <code>EXPO_PUBLIC_DEMO=1 npx expo run:ios</code>
+  </footer>
+</div>
+
+<script>
+  (function () {
+    var screens = [{"id":"01-feed","name":"Read","note":"The weekly issue leads; the archive runs beneath it. No account needed to get this far — that is deliberate, and it is what App Review checks.","tab":"read"},{"id":"02-reader","name":"The article","note":"Serif body at a generous line height, a collapsing header, and a hairline progress rule. On device the cover parallaxes at half scroll speed."},{"id":"03-summary","name":"The short version","note":"AI-written, labelled as such, and scored against a reading-grade target in code rather than assumed to be simple."},{"id":"04-reflection","name":"Write your climate note","note":"Three actions drawn from this specific article, each with a number attached, plus space to write your own. Every option had to quote the sentence that justifies it."},{"id":"05-impact","name":"Impact","note":"A hedged headline figure, the seven-day strip, and a breakdown by category. Every number traces to a published source.","tab":"impact"},{"id":"06-notes","name":"Your notes","note":"One tap to check something off. The commitments you made, and how often you have kept them.","tab":"notes"}];
+
+    var viewport = document.getElementById('viewport');
+    var nameEl = document.getElementById('screen-name');
+    var noteEl = document.getElementById('screen-note');
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('nav button'));
+
+    /* The screen is authored at the app's logical size and scaled to whatever
+       width the device ends up, so proportions survive any viewport. */
+    function fit() {
+      var scale = viewport.clientWidth / 440;
+      Array.prototype.forEach.call(document.querySelectorAll('.screen'), function (el) {
+        el.style.transform = 'scale(' + scale + ')';
+      });
+    }
+
+    function show(id) {
+      var meta = screens.filter(function (s) { return s.id === id; })[0];
+      if (!meta) return;
+
+      Array.prototype.forEach.call(document.querySelectorAll('.screen'), function (el) {
+        el.setAttribute('data-active', String(el.id === id));
+      });
+      tabs.forEach(function (tab) {
+        tab.setAttribute('aria-selected', String(tab.getAttribute('data-target') === id));
+      });
+
+      nameEl.textContent = meta.name;
+      noteEl.textContent = meta.note;
+    }
+
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () { show(tab.getAttribute('data-target')); });
+    });
+
+    /* The in-device tab bar works, so the phone behaves like the phone. */
+    Array.prototype.forEach.call(document.querySelectorAll('.taphit'), function (hit) {
+      hit.addEventListener('click', function () {
+        var wanted = hit.getAttribute('data-tab');
+        var match = screens.filter(function (s) { return s.tab === wanted; })[0];
+        if (match) show(match.id);
+      });
+    });
+
+    window.addEventListener('resize', fit);
+    fit();
+  })();
+</script>
