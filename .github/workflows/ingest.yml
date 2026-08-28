@@ -1,0 +1,57 @@
+# Weekly article ingestion.
+#
+# Runs in Actions rather than a serverless function: the AI steps comfortably
+# exceed a 60-second function timeout, and extraction and chart rendering need
+# real npm packages rather than an edge runtime. Actions minutes are free for
+# this volume.
+
+name: Ingest articles
+
+on:
+  schedule:
+    # Every 30 minutes. A weekly publication does not need this, but it means an
+    # editor who drops a file in Drive sees a draft within half an hour rather
+    # than waiting for a daily run.
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+  repository_dispatch:
+    # Fired by the admin console's "Run now" button.
+    types: [ingest-now]
+
+concurrency:
+  # Never two runs at once: both would try to draft the same document.
+  group: ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run the pipeline
+        working-directory: services/worker
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_TEXT_MODEL: ${{ vars.OPENAI_TEXT_MODEL || 'gpt-4.1-mini' }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+        run: pnpm start

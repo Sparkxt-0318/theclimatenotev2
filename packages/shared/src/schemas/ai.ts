@@ -65,6 +65,10 @@ export const figureSpecSchema = z.object({
   yLabel: z.string().max(80),
   /** Units of the y axis, e.g. "million tonnes CO2e". */
   unit: z.string().max(60),
+  /**
+   * Points are plotted in the order given, so order them meaningfully —
+   * largest first for magnitudes, chronologically for time.
+   */
   series: z
     .array(
       z.object({
