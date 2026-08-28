@@ -5,14 +5,15 @@
   "description": "The Climate Note \u2014 weekly climate newsletter, iOS app + backend",
   "packageManager": "pnpm@9.12.0",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "lint": "eslint .",
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
     "check": "pnpm lint && pnpm typecheck && pnpm test",
-    "db:test": "bash supabase/tests/run.sh"
+    "db:test": "bash supabase/tests/run.sh",
+    "preflight": "pnpm --filter @climatenote/store preflight"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

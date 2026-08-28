@@ -73,8 +73,18 @@ what needs your Apple/Google accounts and what is already automated.
 
 | Command | What it protects |
 |---|---|
+| `pnpm preflight` | **Run before every submission.** Whether the app is actually shippable |
 | `pnpm test` | 112 unit tests: palette contrast and colour-blind safety, impact arithmetic, docx extraction, reflection quality gates, and the browser-auth ban |
-| `pnpm db:test` | 30 assertions, each an attempted breach: anonymous reading drafts, one user reading another's notes, a forged note ID |
+| `pnpm db:test` | 34 assertions, each an attempted breach: anonymous reading drafts, one user reading another's notes, a forged note ID, reading someone's Apple refresh token |
 
 The database tests count their own assertions and fail if any were skipped
 rather than passed.
+
+`pnpm preflight` exists because this project had careful gates for colour
+contrast, reflection quality and row-level security, and none for "can this
+ship". An audit found a fully-built Settings screen that nothing navigated to —
+which made account deletion unreachable and would have failed review outright.
+The gate now checks that every registered route is reachable, that no
+placeholder strings ship, that the icon and screenshots are exactly the sizes
+Apple demands, that the privacy manifest matches the store listing, that Apple
+deletion can actually revoke, and that the app has content to show.

@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 
+import { SUPPORT_EMAIL } from '@/lib/site';
+
 export const metadata: Metadata = { title: 'Terms of use' };
 
 export default function TermsPage() {
@@ -51,7 +53,7 @@ export default function TermsPage() {
 
       <h2>Contact</h2>
       <p>
-        <a href="mailto:hello@theclimatenote.com">hello@theclimatenote.com</a>
+        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
       </p>
     </div>
   );

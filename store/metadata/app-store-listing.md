@@ -149,7 +149,7 @@ Neither flow opens Safari, an SFSafariViewController, or any web view. The app n
 To see this: open the app, tap any article, scroll to "Write your climate note!", choose an option and tap "Sign in to save".
 
 ACCOUNT DELETION (guideline 5.1.1(v)):
-Settings (top right of the Impact tab, or the gear icon) → "Delete my account". This permanently deletes the account, all saved notes and all history, and revokes the Sign in with Apple token via Apple's REST revocation endpoint.
+Tap the gear button at the top right of any tab (Read, Notes or Impact) to open Settings, then "Delete my account". This permanently deletes the account, every saved note and all history, and revokes the Sign in with Apple connection through Apple's REST revocation endpoint before deleting anything. The gear button is present whether or not you are signed in, so the privacy policy, terms and support links are reachable without an account.
 
 DEMO ACCOUNT:
 Not required, since all content is visible without signing in. If you would prefer one, we are happy to provide credentials.

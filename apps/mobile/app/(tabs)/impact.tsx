@@ -31,6 +31,8 @@ const CATEGORY_LABELS: Record<string, string> = {
   waste: 'Waste',
   water: 'Water',
   consumption: 'Things you buy',
+  // Actions we log but decline to put a carbon figure on.
+  unmeasured: 'Not measured in carbon',
 };
 
 export default function ImpactScreen() {

@@ -11,6 +11,9 @@ export default async function ArchivePage() {
   const { data: issues } = await supabase
     .from('published_articles')
     .select('slug, title, dek, published_at, issue_number, reading_minutes')
+    // Explicit: a view's ORDER BY is not guaranteed to survive PostgREST
+    // wrapping it in a subquery, and the homepage treats row 0 as "this week".
+    .order('published_at', { ascending: false })
     .limit(100);
 
   return (

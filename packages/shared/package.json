@@ -13,7 +13,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/**/*.test.ts",
+    "test": "tsx --test 'src/**/*.test.ts'",
     "gen:factor-seed": "tsx scripts/generate-factor-seed.ts"
   },
   "dependencies": {

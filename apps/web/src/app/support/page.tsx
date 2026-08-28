@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 
+import { SUPPORT_EMAIL } from '@/lib/site';
+
 export const metadata: Metadata = { title: 'Support' };
 
 /** App Review requires a reachable support URL with a real way to get help. */
@@ -10,7 +12,7 @@ export default function SupportPage() {
 
       <p>
         Something broken, confusing, or wrong? Email{' '}
-        <a href="mailto:hello@theclimatenote.com">hello@theclimatenote.com</a> and
+        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> and
         a person will reply, usually within a couple of days.
       </p>
 

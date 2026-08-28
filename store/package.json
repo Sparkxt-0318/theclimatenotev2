@@ -6,7 +6,8 @@
   "scripts": {
     "screenshots": "tsx screenshots/generate.ts",
     "icon": "tsx icon/generate.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "preflight": "tsx preflight.ts"
   },
   "dependencies": {
     "@climatenote/shared": "workspace:*"

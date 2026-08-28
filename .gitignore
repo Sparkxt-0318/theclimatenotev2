@@ -26,8 +26,6 @@ out/
 apps/mobile/ios/
 apps/mobile/android/
 
-# generated screenshots (regenerate with pnpm --filter store screenshots)
-store/screenshots/generated/
 
 # os / editor
 .DS_Store

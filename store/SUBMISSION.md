@@ -39,11 +39,16 @@ app uses your exact green there.
 1. Create a project at supabase.com. Choose a region near your readers.
 2. Project Settings → API. Copy the URL, the `anon` key and the `service_role`
    key.
-3. Run the migrations:
+3. Run the migrations. `supabase init` first — the CLI needs a
+   `supabase/config.toml` before it will link, and this repo does not ship one:
    ```
+   npx supabase init          # answer no to overwriting anything
    npx supabase link --project-ref YOUR_PROJECT_REF
    npx supabase db push
    ```
+   If `db push` reports it skipped the storage policies, that is expected and
+   harmless — the migration says why. Just confirm a public `article-images`
+   bucket exists under Storage.
 4. Authentication → Providers → enable **Apple** and **Google**.
 5. Make yourself an admin, replacing the email:
    ```sql
@@ -92,14 +97,17 @@ Then:
 3. Note your Team ID (top right of the portal) and the Key ID.
 4. Configure the same values in Supabase → Authentication → Providers → Apple.
 
-Then set the account-deletion function's secrets — this is what revokes the
-Apple token, which review requires:
+Then set the Apple secrets and deploy BOTH functions. `apple-link` captures the
+refresh token at sign-in; `delete-account` revokes it. Without the first, the
+second has nothing to revoke and deletion will refuse:
 
 ```
 npx supabase secrets set APPLE_TEAM_ID=XXXXXXXXXX
 npx supabase secrets set APPLE_KEY_ID=XXXXXXXXXX
 npx supabase secrets set APPLE_SERVICE_ID=com.theclimatenote.app
 npx supabase secrets set APPLE_PRIVATE_KEY="$(cat AuthKey_XXXXXXXXXX.p8)"
+
+npx supabase functions deploy apple-link
 npx supabase functions deploy delete-account
 ```
 
@@ -170,7 +178,32 @@ the admin console at `/admin`.
 ```
 npm install -g eas-cli
 eas login                       # create a free Expo account if needed
-eas init                        # links the project, writes the project ID
+eas init                        # links the project and PRINTS a project ID
+```
+
+**`eas init` cannot write the project ID into this repo.** It writes to a static
+`app.json`, and this project uses a dynamic `app.config.ts`. Copy the ID it
+prints and set it yourself in the next step.
+
+**Now set the build-time variables.** This step is not optional and is easy to
+miss: Expo inlines `EXPO_PUBLIC_*` values into the bundle *at build time*, on
+the EAS builder. Your local `.env` never gets there — it is gitignored, and EAS
+uploads via git. Without these the build now fails loudly (it used to produce a
+binary that crashed on launch):
+
+```
+eas env:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --value "https://YOUR.supabase.co"
+eas env:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "..."
+eas env:create --scope project --name EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID --value "..."
+eas env:create --scope project --name EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID --value "..."
+eas env:create --scope project --name EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME --value "com.googleusercontent.apps.123-abc"
+eas env:create --scope project --name EXPO_PUBLIC_SITE_URL --value "https://YOUR.vercel.app"
+eas env:create --scope project --name EAS_PROJECT_ID --value "<the id eas init printed>"
+```
+
+Then build:
+
+```
 eas build --profile development --platform ios
 ```
 
@@ -182,16 +215,18 @@ Install the resulting build on your iPhone and **verify the fix**:
 1. Tap an article → "Write your climate note!" → an option → "Sign in to save".
 2. Tap **Continue with Apple**. Watch the screen carefully.
 3. Tap **Continue with Google**. Watch again.
+4. Confirm the **gear button at the top right of every tab** opens Settings.
 
 **Safari must never appear, not even for a frame.** If it does, something has
 regressed — `pnpm test` should have caught it, so check that first.
 
 Then test deletion, because reviewers do:
 
-4. Settings → Delete my account → confirm.
-5. On the phone: Settings → your name → Sign-In & Security → Sign in with Apple.
-   **The Climate Note must no longer be listed.** If it is, the revocation
-   failed; check the Edge Function logs.
+5. Settings → Delete my account → confirm.
+6. On the phone: Settings → your name → Sign-In & Security → Sign in with Apple.
+   **The Climate Note must no longer be listed.** If it is still there, the
+   revocation failed — check the `apple-link` function logs first, since the
+   refresh token it stores is what makes revocation possible at all.
 
 ---
 
@@ -216,6 +251,15 @@ Then test deletion, because reviewers do:
 6. Upload the six screenshots from `store/screenshots/generated/`.
 7. Upload `store/icon/generated/app-icon-1024.png`.
 8. Submit for review.
+
+**Before you submit, run `pnpm preflight`.** It checks the things that are
+mechanically checkable: that every screen in the app is reachable (including
+Settings, so account deletion is not stranded), that no placeholder strings
+ship, that the icon and screenshots are exactly the sizes Apple demands, that
+the privacy manifest matches this listing, that no browser-based sign-in has
+crept back in, that Apple deletion can actually revoke, that the lockfile is in
+sync, that your privacy and support URLs return 200, and that the app has
+articles to show. It exits non-zero if anything fails.
 
 **Automated** — the screenshots and icon regenerate any time with
 `pnpm --filter @climatenote/store screenshots` and `... icon`, and both verify

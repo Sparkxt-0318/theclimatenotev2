@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import { SITE_URL } from '@/lib/site';
+
 import './globals.css';
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+
 
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE),
+  metadataBase: new URL(SITE_URL),
   title: { default: 'The Climate Note', template: '%s · The Climate Note' },
   description:
     'A weekly climate newsletter for people who are going to have to live with the consequences. Plain language, real numbers, and one thing you can actually do.',

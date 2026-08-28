@@ -7,7 +7,7 @@
     "start": "expo start --dev-client",
     "prebuild": "expo prebuild --platform ios --clean",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/**/*.test.ts",
+    "test": "tsx --test 'src/**/*.test.ts'",
     "build:dev": "eas build --profile development --platform ios",
     "build:prod": "eas build --profile production --platform ios",
     "submit": "eas submit --platform ios --latest"

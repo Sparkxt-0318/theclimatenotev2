@@ -7,7 +7,7 @@
     "start": "tsx src/index.ts",
     "run:once": "tsx src/index.ts --once",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/**/*.test.ts"
+    "test": "tsx --test 'src/**/*.test.ts'"
   },
   "dependencies": {
     "@climatenote/shared": "workspace:*",

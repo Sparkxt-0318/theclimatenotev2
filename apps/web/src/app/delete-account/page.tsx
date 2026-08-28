@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 
+import { SUPPORT_EMAIL } from '@/lib/site';
+
 export const metadata: Metadata = { title: 'Delete your account' };
 
 /**
@@ -26,8 +28,8 @@ export default function DeleteAccountPage() {
       <h2>If you have already deleted the app</h2>
       <p>
         Email{' '}
-        <a href="mailto:hello@theclimatenote.com?subject=Delete%20my%20account">
-          hello@theclimatenote.com
+        <a href={`mailto:${SUPPORT_EMAIL}?subject=Delete%20my%20account`}>
+          {SUPPORT_EMAIL}
         </a>{' '}
         from the address you signed up with, and we will delete it within seven
         days and confirm when it is done.
