@@ -8,7 +8,9 @@
     "icon": "tsx icon/generate.ts",
     "typecheck": "tsc --noEmit",
     "preflight": "tsx preflight.ts",
-    "preview": "tsx preview/generate.ts"
+    "preview": "tsx preview/generate.ts",
+    "provision:supabase": "tsx provision/supabase.ts",
+    "test": "tsx --test 'provision/*.test.ts'"
   },
   "dependencies": {
     "@climatenote/shared": "workspace:*"

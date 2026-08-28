@@ -60,6 +60,33 @@ The service role key bypasses every security rule in the database. It belongs
 only in GitHub Actions secrets and Vercel environment variables — never in the
 app, never in the repository.
 
+### Or let the repository do all of it
+
+Steps 1–5 above, plus the Apple and Google provider configuration from sections
+2 and 3 and both Edge Function deploys, are scripted:
+
+```
+SUPABASE_ACCESS_TOKEN=sbp_... pnpm provision:supabase --dry-run   # sends nothing
+SUPABASE_ACCESS_TOKEN=sbp_... pnpm provision:supabase
+```
+
+Everything runs over HTTPS through the Management API rather than a direct
+Postgres connection, so it works from anywhere — including environments where
+`db push` cannot reach port 5432 at all. It adopts an existing project rather
+than making a second one, skips migrations already applied, and never blanks a
+setting it was not given a value for, so re-running it is safe.
+
+`--dry-run` prints every request it would make with the secrets redacted. Read
+that output before running it for real — especially if someone else is holding
+the token. The token itself comes from
+[supabase.com/dashboard/account/tokens](https://supabase.com/dashboard/account/tokens)
+and should be revoked as soon as provisioning is done.
+
+Inputs it reads, all optional except the token: `SUPABASE_PROJECT_REF` (or
+`SUPABASE_ORG_SLUG` + `SUPABASE_DB_PASSWORD` to create one), `SITE_URL`,
+`ADMIN_EMAIL`, `GOOGLE_WEB_CLIENT_ID`, `GOOGLE_WEB_CLIENT_SECRET`,
+`GOOGLE_IOS_CLIENT_ID`, and the four `APPLE_*` values.
+
 ---
 
 ## 2. Google sign-in (~15 minutes)
@@ -98,8 +125,11 @@ Then:
 4. Configure the same values in Supabase → Authentication → Providers → Apple.
 
 Then set the Apple secrets and deploy BOTH functions. `apple-link` captures the
-refresh token at sign-in; `delete-account` revokes it. Without the first, the
-second has nothing to revoke and deletion will refuse:
+refresh token at sign-in; `delete-account` revokes it. Deploy both: deletion
+itself is unconditional and never refuses, but without `apple-link` there is no
+token to revoke, so the app keeps appearing under Settings → Sign-In & Security
+→ Sign in with Apple after the account is gone — which is the half of guideline
+5.1.1(v) reviewers actually check:
 
 ```
 npx supabase secrets set APPLE_TEAM_ID=XXXXXXXXXX
@@ -123,11 +153,17 @@ npx supabase functions deploy delete-account
    **Viewer**. That is the entire authorisation step — no consent screen.
 4. Copy the folder ID from the Drive URL:
    `drive.google.com/drive/folders/THIS_PART`
-5. Create an OpenAI API key at platform.openai.com and **add a payment method**.
-   A ChatGPT Plus subscription does not include API access. Around $5 covers a
-   year at one issue a week.
+5. Create a **Gemini API key** at
+   [aistudio.google.com/apikey](https://aistudio.google.com/apikey). The free
+   tier needs no billing account, and one issue a week sits far inside its
+   limits — this is the whole AI cost of the project.
 6. Optional but recommended: free Unsplash and Pexels API keys widen the photo
    search. Wikimedia and NASA work without keys.
+
+> **You do not need OpenAI.** The pipeline picks its provider from whichever key
+> is present, preferring Gemini. If you would rather use OpenAI, set
+> `OPENAI_API_KEY` instead — but note that a ChatGPT Plus subscription does not
+> include API access; the API bills separately and needs its own payment method.
 
 Then add these as **GitHub Actions secrets** (Settings → Secrets and variables →
 Actions):
@@ -137,10 +173,10 @@ SUPABASE_URL
 SUPABASE_SERVICE_ROLE_KEY
 GOOGLE_SERVICE_ACCOUNT_JSON     (the whole JSON file, pasted as one value)
 GOOGLE_DRIVE_FOLDER_ID
-OPENAI_API_KEY
 GEMINI_API_KEY
-UNSPLASH_ACCESS_KEY
-PEXELS_API_KEY
+UNSPLASH_ACCESS_KEY             (optional)
+PEXELS_API_KEY                  (optional)
+OPENAI_API_KEY                  (only if you chose OpenAI over Gemini)
 ```
 
 **Automated** — from then on the pipeline checks Drive every 30 minutes, drafts
@@ -236,8 +272,11 @@ Then test deletion, because reviewers do:
 
 1. App Store Connect → create the app record. Bundle ID
    `com.theclimatenote.app`, name **The Climate Note**.
-2. Users and Access → Integrations → App Store Connect API → create a key with
-   **App Manager** access. Download the `.p8`.
+2. Users and Access → Integrations → App Store Connect API → create a key.
+   **App Manager** is enough for `eas submit` alone; choose **Admin** if you
+   want EAS to create and manage the signing certificates for you instead of
+   doing it through Xcode, which is the whole point of not needing a Mac.
+   Download the `.p8` — like the Sign in with Apple key, it downloads once.
 3. Put it at `apps/mobile/private/AuthKey.p8` (gitignored) and fill in the
    issuer ID and key ID in `apps/mobile/eas.json`.
 4. Build and submit:

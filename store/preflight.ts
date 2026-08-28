@@ -21,6 +21,7 @@
  */
 
 import { execFileSync } from 'node:child_process';
+import { lookup } from 'node:dns/promises';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { extname, join } from 'node:path';
 
@@ -341,6 +342,45 @@ const checks: Check[] = [
     },
   },
   {
+    area: 'Review notes',
+    name: 'the AI disclosures promised to App Review are actually rendered',
+    /**
+     * The review notes tell Apple that both the summary and the suggested
+     * actions are labelled in the app as AI-written. The summary was; the
+     * reflection section carried its AI attribution only in a code comment, so
+     * the notes claimed something a reviewer could check and find false. Source
+     * comments are stripped before matching, because a comment is exactly what
+     * fooled the last reading of this file.
+     */
+    run: () => {
+      const notes = read('store/metadata/app-store-listing.md');
+      if (!/labelled in the app as AI-written/.test(notes)) {
+        return skip('the review notes no longer promise an in-app AI label');
+      }
+
+      const promised: [string, string][] = [
+        ['apps/mobile/src/components/summary-card.tsx', 'the AI summary'],
+        ['apps/mobile/src/components/reflection-section.tsx', 'the suggested actions'],
+      ];
+
+      const missing = promised
+        .filter(([path]) => {
+          const rendered = read(path)
+            .replace(/\/\*[\s\S]*?\*\//g, '')
+            .replace(/\/\/.*$/gm, '');
+          return !/\bby AI\b/i.test(rendered);
+        })
+        .map(([path, what]) => `${what} (${path})`);
+
+      return missing.length === 0
+        ? pass('both labelled')
+        : fail(
+            `the review notes promise an in-app AI label, but none is rendered for ` +
+              `${missing.join(' or ')}. Either add the label or stop claiming it.`,
+          );
+    },
+  },
+  {
     area: 'Contact',
     name: 'support address is a real mailbox',
     run: () => {
@@ -377,6 +417,49 @@ const checks: Check[] = [
             `(${error instanceof Error ? error.message.split('\n')[0] : 'unknown'})`,
         );
       }
+    },
+  },
+  {
+    area: 'Live URLs',
+    name: 'the store listing points at a site that exists',
+    /**
+     * The listing is what App Review actually clicks, and it is a hand-edited
+     * markdown file — nothing kept it in step with where the site is deployed.
+     * It shipped pointing at theclimatenote.com, a domain with no DNS record
+     * at all, which is a 1.5 / 5.1.1(i) rejection waiting to happen. The check
+     * below is deliberately useful before any environment exists: with no site
+     * configured it still refuses a host that does not resolve.
+     */
+    run: async () => {
+      const urls = [...read('store/metadata/app-store-listing.md').matchAll(/^https:\/\/\S+$/gm)].map(
+        (match) => match[0],
+      );
+      if (urls.length === 0) return fail('no URLs found in the listing — has the file changed shape?');
+
+      const hosts = [...new Set(urls.map((url) => new URL(url).host))];
+      if (hosts.length > 1) {
+        return fail(`the listing mixes hosts (${hosts.join(', ')}); all of them must be the live site`);
+      }
+      const host = hosts[0] as string;
+
+      const site = process.env.EXPO_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_SITE_URL;
+      if (site && new URL(site).host !== host) {
+        return fail(
+          `the listing sends App Review to ${host}, but the app's own privacy, terms and ` +
+            `support links go to ${new URL(site).host}. Update store/metadata/app-store-listing.md.`,
+        );
+      }
+
+      try {
+        await lookup(host);
+      } catch {
+        return fail(
+          `${host} has no DNS record, so every link in the listing is dead. ` +
+            `Point them at the site you actually deploy.`,
+        );
+      }
+
+      return pass(site ? `${host}, matching the configured site` : host);
     },
   },
   {

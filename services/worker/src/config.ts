@@ -35,10 +35,18 @@ function required(name: string): string {
  * Gemini wins a tie because its free tier costs nothing and the volume here is
  * one article a week.
  */
-function resolveProvider(): AiProvider {
-  const explicit = process.env.AI_PROVIDER?.toLowerCase();
+export function resolveProvider(): AiProvider {
+  // Empty rather than absent is the normal shape in GitHub Actions, where an
+  // unset repository variable still expands to "". A value that is neither
+  // empty nor a provider name is a typo, and must not fall through to the
+  // key-presence logic below — that would quietly run the provider the author
+  // was trying to override.
+  const explicit = process.env.AI_PROVIDER?.trim().toLowerCase();
 
-  if (explicit === 'gemini' || explicit === 'openai') {
+  if (explicit) {
+    if (explicit !== 'gemini' && explicit !== 'openai') {
+      throw new Error(`AI_PROVIDER is "${explicit}"; it must be "gemini" or "openai".`);
+    }
     const key = explicit === 'gemini' ? 'GEMINI_API_KEY' : 'OPENAI_API_KEY';
     if (!process.env[key]) {
       throw new Error(`AI_PROVIDER is set to ${explicit}, but ${key} is not set.`);

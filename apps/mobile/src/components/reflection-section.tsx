@@ -99,6 +99,12 @@ export function ReflectionSection({
         <Text variant="callout" tone="secondary" serif>
           Pick one thing to try this week. Small and specific beats big and vague.
         </Text>
+        {options.length > 0 ? (
+          <Text variant="caption2" tone="tertiary" serif={false} style={styles.disclosure}>
+            Suggestions written by AI from the article above, and checked by an
+            editor before publishing. Anything you write yourself is your own.
+          </Text>
+        ) : null}
       </View>
 
       <View style={styles.options}>
@@ -258,6 +264,7 @@ const styles = StyleSheet.create({
   container: { paddingHorizontal: gutter.screen, paddingTop: spacing.giant, gap: spacing.xl },
   savedState: { gap: spacing.lg, paddingTop: spacing.giant },
   heading: { gap: spacing.sm },
+  disclosure: { paddingTop: spacing.xs },
   options: { gap: spacing.md },
   option: { borderRadius: radius.lg, borderWidth: 1, padding: spacing.lg, gap: spacing.md },
   optionHeader: { flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' },

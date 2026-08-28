@@ -13,7 +13,8 @@
     "test": "pnpm -r --if-present test",
     "check": "pnpm lint && pnpm typecheck && pnpm test",
     "db:test": "bash supabase/tests/run.sh",
-    "preflight": "pnpm --filter @climatenote/store preflight"
+    "preflight": "pnpm --filter @climatenote/store preflight",
+    "provision:supabase": "pnpm --filter @climatenote/store provision:supabase"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
