@@ -282,6 +282,38 @@ const checks: Check[] = [
     },
   },
   {
+    area: 'Pipeline',
+    name: 'the content checksum is written only after every step succeeds',
+    /**
+     * The worst bug this project had. `upsertArticle` used to write
+     * `source_checksum` alongside the article row, BEFORE the AI steps ran. Any
+     * failure after that — a rate limit, a timeout, an image sharp could not
+     * decode — left the row marked "already processed", so the skip guard
+     * skipped it forever. The document sat in the review queue as a permanently
+     * broken draft that no re-run would ever repair.
+     */
+    run: () => {
+      const pipeline = read('services/worker/src/pipeline/run.ts');
+
+      const upsertStart = pipeline.indexOf('async function upsertArticle');
+      if (upsertStart === -1) return fail('upsertArticle is gone; this check needs updating');
+
+      const upsertEnd = pipeline.indexOf('\nasync function', upsertStart + 10);
+      const upsertBody = pipeline.slice(upsertStart, upsertEnd === -1 ? undefined : upsertEnd);
+
+      if (/source_checksum/.test(upsertBody)) {
+        return fail(
+          'upsertArticle writes source_checksum. It must be written only after the ' +
+            'AI steps succeed, or any failure marks the document processed and it is ' +
+            'skipped forever.',
+        );
+      }
+      return /update\(\{ source_checksum/.test(pipeline)
+        ? pass('written at finalise')
+        : fail('nothing writes source_checksum; documents would reprocess every run');
+    },
+  },
+  {
     area: 'Contact',
     name: 'support address is a real mailbox',
     run: () => {

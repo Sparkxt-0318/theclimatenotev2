@@ -16,12 +16,16 @@ const SELECT = `id, slug, title, dek, published_at, issue_number, reading_minute
 
 async function loadArticle(slug: string) {
   const supabase = publicClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('articles')
     .select(SELECT)
     .eq('slug', slug)
     .eq('status', 'published')
     .maybeSingle();
+
+  // Distinguishes "no such article" from "the query failed", which otherwise
+  // both render as a 404 with nothing logged.
+  if (error) console.error(`[article ${slug}] query failed: ${error.message}`);
   return data;
 }
 

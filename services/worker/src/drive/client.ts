@@ -74,6 +74,9 @@ export async function downloadAsDocx(drive: drive_v3.Drive, file: DriveFile): Pr
   const response =
     file.mimeType === GOOGLE_DOC_MIME
       ? await drive.files.export(
+          // No supportsAllDrives here: files.export does not take it in Drive
+          // v3 (unlike files.get below). Export reads converted content rather
+          // than shared-drive metadata, so it works either way.
           { fileId: file.id, mimeType: DOCX_MIME },
           { responseType: 'arraybuffer' },
         )

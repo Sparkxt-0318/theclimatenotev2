@@ -198,13 +198,24 @@ async function registerAppleCredential(authorizationCode: string): Promise<void>
  * the code. Returns null if the reader cancels, which is not an error: deletion
  * proceeds regardless, because a user who asked to be deleted gets deleted.
  */
-export async function getFreshAppleAuthorizationCode(): Promise<string | null> {
+export async function getFreshAppleAuthorizationCode(
+  expectedAppleSubject?: string,
+): Promise<string | null> {
   try {
     if (!(await AppleAuthentication.isAvailableAsync())) return null;
 
     const credential = await AppleAuthentication.signInAsync({
       requestedScopes: [AppleAuthentication.AppleAuthenticationScope.EMAIL],
     });
+
+    // Guard against the device being signed into a different Apple ID than the
+    // one this account was created with: revoking with that code would
+    // disconnect the wrong account and leave this one connected.
+    if (expectedAppleSubject && credential.user && credential.user !== expectedAppleSubject) {
+      console.warn('[auth] Apple returned a different account; not using its code for revocation.');
+      return null;
+    }
+
     return credential.authorizationCode ?? null;
   } catch (error) {
     if (!isAppleCancellation(error)) {

@@ -34,8 +34,18 @@ export async function deleteAccount(): Promise<DeletionResult> {
   // A null here — the reader cancelled, or Apple errored — does NOT stop the
   // deletion. The server falls back to the token stored at sign-in, and
   // deletes either way.
-  const usedApple = session.user.identities?.some((identity) => identity.provider === 'apple');
-  const appleAuthorizationCode = usedApple ? await getFreshAppleAuthorizationCode() : null;
+  const appleIdentity = session.user.identities?.find((identity) => identity.provider === 'apple');
+
+  // Pass the Apple subject this account was created with. If the device is
+  // signed into a DIFFERENT Apple ID, the code we get back belongs to that
+  // other account — revoking with it would disconnect the wrong person's app
+  // while leaving this one connected.
+  const expectedAppleSubject =
+    (appleIdentity?.identity_data?.sub as string | undefined) ?? appleIdentity?.id;
+
+  const appleAuthorizationCode = appleIdentity
+    ? await getFreshAppleAuthorizationCode(expectedAppleSubject)
+    : null;
 
   const { data, error } = await supabase.functions.invoke<{
     deleted: boolean;

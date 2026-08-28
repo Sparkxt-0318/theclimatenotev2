@@ -8,13 +8,17 @@ export const metadata: Metadata = { title: 'Issues' };
 
 export default async function ArchivePage() {
   const supabase = publicClient();
-  const { data: issues } = await supabase
+  const { data: issues, error } = await supabase
     .from('published_articles')
     .select('slug, title, dek, published_at, issue_number, reading_minutes')
     // Explicit: a view's ORDER BY is not guaranteed to survive PostgREST
     // wrapping it in a subquery, and the homepage treats row 0 as "this week".
     .order('published_at', { ascending: false })
     .limit(100);
+
+  // Surfaced rather than swallowed: an RLS denial or a missing grant would
+  // otherwise render as "nothing published yet" with nothing logged anywhere.
+  if (error) console.error(`[archive] could not load articles: ${error.message}`);
 
   return (
     <div className="container">
