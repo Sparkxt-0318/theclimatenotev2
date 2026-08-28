@@ -1,0 +1,43 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# secrets — never commit
+.env
+.env.*
+!.env.example
+*.p8
+*.p12
+*.mobileprovision
+service-account*.json
+google-services.json
+GoogleService-Info.plist
+
+# builds
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# expo
+.expo/
+.expo-shared/
+apps/mobile/ios/
+apps/mobile/android/
+
+# generated screenshots (regenerate with pnpm --filter store screenshots)
+store/screenshots/generated/
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# logs / coverage
+*.log
+npm-debug.log*
+coverage/
+.vercel
