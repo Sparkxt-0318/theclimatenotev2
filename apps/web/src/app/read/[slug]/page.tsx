@@ -102,7 +102,6 @@ export default async function ArticlePage({ params }: Params) {
 
       {cover ? (
         <figure style={{ margin: '0 0 40px' }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageUrl(cover.storage_path)}
             alt={cover.alt_text}

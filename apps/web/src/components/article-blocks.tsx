@@ -81,7 +81,6 @@ export function ArticleBlocks({ blocks }: { blocks: ArticleBlock[] }) {
           case 'image':
             return (
               <figure key={index} style={{ margin: '2em 0' }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={imageUrl(block.storagePath)} alt={block.alt} loading="lazy" />
                 {block.caption ? (
                   <figcaption className="small">{block.caption}</figcaption>

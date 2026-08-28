@@ -116,7 +116,6 @@ export default async function ReviewPage({ params }: Params) {
         ) : (
           assets.map((asset) => (
             <div key={asset.id} className="card" style={{ marginBottom: 12 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={imageUrl(asset.storage_path)}
                 alt={asset.alt_text}
