@@ -8,6 +8,7 @@
 
 import { Button } from '@/components/button';
 import { PressableScale } from '@/components/pressable-scale';
+import { ScreenHeader } from '@/components/screen-header';
 import { Text } from '@/components/text';
 import { useAuth } from '@/features/auth';
 import { useCompleteNote, useNotes, useUncompleteNote, type NoteRow } from '@/features/notes/queries';
@@ -30,20 +31,24 @@ export default function NotesScreen() {
   if (!isSignedIn) {
     return (
       <View
-        style={[
-          styles.signedOut,
-          { backgroundColor: colors.background, paddingTop: insets.top + spacing.giant },
-        ]}
+        style={{
+          flex: 1,
+          backgroundColor: colors.background,
+          paddingTop: insets.top + spacing.lg,
+        }}
       >
-        <Text variant="largeTitle" serif center>
-          Your climate notes
-        </Text>
-        <Text variant="callout" tone="secondary" serif center>
-          Pick an action at the end of any article and it will show up here to
-          check off through the week.
-        </Text>
-        <Button label="Sign in" onPress={() => router.push('/sign-in')} />
-        <Button label="Browse articles" variant="plain" onPress={() => router.push('/')} />
+        {/* The header stays when signed out, so Settings — and with it the
+            privacy, terms and support links — is reachable without an account. */}
+        <ScreenHeader title="Your notes" />
+
+        <View style={styles.signedOut}>
+          <Text variant="callout" tone="secondary" serif center>
+            Pick an action at the end of any article and it will show up here to
+            check off through the week.
+          </Text>
+          <Button label="Sign in" onPress={() => router.push('/sign-in')} />
+          <Button label="Browse articles" variant="plain" onPress={() => router.push('/')} />
+        </View>
       </View>
     );
   }
@@ -66,14 +71,7 @@ export default function NotesScreen() {
         paddingBottom: insets.bottom + spacing.giant,
       }}
     >
-      <View style={styles.header}>
-        <Text variant="largeTitle" serif>
-          Your notes
-        </Text>
-        <Text variant="subheadline" tone="secondary" serif={false}>
-          Tap to check something off for today.
-        </Text>
-      </View>
+      <ScreenHeader title="Your notes" subtitle="Tap to check something off for today." />
 
       {active.length === 0 ? (
         <View style={styles.empty}>
@@ -179,8 +177,7 @@ function NoteCard({
 
 const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  signedOut: { flex: 1, paddingHorizontal: gutter.screen, gap: spacing.lg },
-  header: { paddingHorizontal: gutter.screen, paddingBottom: spacing.xl, gap: spacing.xxs },
+  signedOut: { paddingHorizontal: gutter.screen, gap: spacing.lg, paddingTop: spacing.xxxl },
   empty: { padding: spacing.huge, gap: spacing.lg },
   list: { paddingHorizontal: gutter.screen, gap: spacing.md },
   card: {

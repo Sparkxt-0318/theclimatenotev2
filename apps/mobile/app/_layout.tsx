@@ -1,4 +1,6 @@
+import { ConfigurationError } from '@/components/configuration-error';
 import { AuthProvider } from '@/features/auth';
+import { isSupabaseConfigured } from '@/lib/supabase';
 import { useTheme } from '@/theme';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
@@ -20,6 +22,17 @@ const queryClient = new QueryClient({
 
 export default function RootLayout() {
   const { colors, scheme } = useTheme();
+
+  // A build with no backend cannot show anything. Say so, rather than
+  // rendering an app whose every request fails.
+  if (!isSupabaseConfigured) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+        <ConfigurationError />
+      </SafeAreaProvider>
+    );
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

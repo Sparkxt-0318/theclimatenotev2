@@ -20,10 +20,5 @@
     "prettier": "^3.4.2",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.1"
-  },
-  "pnpm": {
-    "overrides": {
-      "react-dom": "19.2.3"
-    }
   }
 }

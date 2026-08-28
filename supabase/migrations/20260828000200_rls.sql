@@ -125,15 +125,47 @@ create policy "admins manage ingestion jobs" on ingestion_jobs
   for all using (is_admin(auth.uid())) with check (is_admin(auth.uid()));
 
 -- ── Storage ─────────────────────────────────────────────────────────────────
--- Article images are public: they appear in the app, on the website and in
--- social previews. Writes are service-role only, which the pipeline uses.
+-- Article images live in a PUBLIC bucket: they appear in the app, on the
+-- website and in social previews.
+--
+-- Wrapped in an exception handler on purpose. On a hosted Supabase project the
+-- storage schema is owned by `supabase_storage_admin`, not `postgres`, so
+-- CREATE POLICY on storage.objects can fail with "must be owner of table
+-- objects" and abort the whole migration. The local test shim creates those
+-- tables as `postgres`, so a passing CI run does NOT prove a hosted push will
+-- work — which is exactly the kind of difference that only shows up in
+-- production.
+--
+-- Neither policy is load-bearing. The bucket is public, so reads need no
+-- policy, and every write is done by the ingestion worker using the service
+-- role, which bypasses row-level security entirely. If this block is skipped,
+-- create the `article-images` bucket in the dashboard and everything works.
+do $$
+begin
+  insert into storage.buckets (id, name, public)
+  values ('article-images', 'article-images', true)
+  on conflict (id) do nothing;
 
-insert into storage.buckets (id, name, public)
-values ('article-images', 'article-images', true)
-on conflict (id) do nothing;
+  begin
+    create policy "anyone reads article images" on storage.objects
+      for select using (bucket_id = 'article-images');
+  exception
+    when duplicate_object then null;
+    when insufficient_privilege then
+      raise notice 'Skipped storage read policy (not the owner of storage.objects). The bucket is public, so this is not required.';
+  end;
 
-create policy "anyone reads article images" on storage.objects
-  for select using (bucket_id = 'article-images');
+  begin
+    create policy "admins upload article images" on storage.objects
+      for insert with check (bucket_id = 'article-images' and is_admin(auth.uid()));
+  exception
+    when duplicate_object then null;
+    when insufficient_privilege then
+      raise notice 'Skipped storage write policy (not the owner of storage.objects). The worker writes with the service role, which bypasses RLS.';
+  end;
 
-create policy "admins upload article images" on storage.objects
-  for insert with check (bucket_id = 'article-images' and is_admin(auth.uid()));
+exception
+  when insufficient_privilege then
+    raise notice 'Could not configure storage from a migration. Create the public "article-images" bucket in the Supabase dashboard.';
+end
+$$;

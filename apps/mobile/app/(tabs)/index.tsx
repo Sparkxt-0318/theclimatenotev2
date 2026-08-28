@@ -8,6 +8,7 @@
 
 import { ArchiveRow } from '@/components/archive-row';
 import { HeroCard } from '@/components/hero-card';
+import { ScreenHeader } from '@/components/screen-header';
 import { Text } from '@/components/text';
 import { useArticleFeed } from '@/features/articles/queries';
 import { useAuth } from '@/features/auth';
@@ -61,14 +62,10 @@ export default function ReadScreen() {
       }
       ListHeaderComponent={
         <View style={{ paddingTop: insets.top + spacing.lg }}>
-          <View style={styles.masthead}>
-            <Text variant="largeTitle" serif>
-              The Climate Note
-            </Text>
-            <Text variant="subheadline" tone="secondary" serif={false}>
-              {isSignedIn ? 'This week' : 'A weekly read on the climate'}
-            </Text>
-          </View>
+          <ScreenHeader
+            title="The Climate Note"
+            subtitle={isSignedIn ? 'This week' : 'A weekly read on the climate'}
+          />
 
           {latest ? (
             <HeroCard
@@ -103,7 +100,6 @@ export default function ReadScreen() {
 const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   errorBody: { marginTop: spacing.sm },
-  masthead: { paddingHorizontal: gutter.screen, paddingBottom: spacing.xl, gap: spacing.xxs },
   sectionLabel: {
     paddingHorizontal: gutter.screen,
     paddingTop: spacing.xxxl,

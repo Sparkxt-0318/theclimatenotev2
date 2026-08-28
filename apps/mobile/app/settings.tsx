@@ -16,7 +16,13 @@ import { useState } from 'react';
 import { Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const SITE = process.env.EXPO_PUBLIC_SITE_URL ?? 'https://theclimatenote.com';
+/**
+ * The website. Required at build time (see app.config.ts) — the fallback here
+ * exists only so `expo start` works locally before the site is deployed. It must
+ * never be a domain we do not control: these links are the privacy policy and
+ * support page App Review checks.
+ */
+const SITE = process.env.EXPO_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 
 export default function SettingsScreen() {
   const { colors } = useTheme();

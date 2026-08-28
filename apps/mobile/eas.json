@@ -20,10 +20,9 @@
   "submit": {
     "production": {
       "ios": {
-        "//": "Set these from the App Store Connect API key. See store/SUBMISSION.md.",
         "ascApiKeyPath": "./private/AuthKey.p8",
-        "ascApiKeyIssuerId": "REPLACE_WITH_ISSUER_ID",
-        "ascApiKeyId": "REPLACE_WITH_KEY_ID"
+        "ascApiKeyIssuerId": "$ASC_API_KEY_ISSUER_ID",
+        "ascApiKeyId": "$ASC_API_KEY_ID"
       }
     }
   }

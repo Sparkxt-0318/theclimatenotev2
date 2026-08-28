@@ -290,6 +290,50 @@ begin
 end
 $$;
 
+-- ── Apple refresh tokens ────────────────────────────────────────────────────
+-- RLS is on with no policies at all, so nothing but the service role can read
+-- these. They are durable credentials for a user's Apple account connection,
+-- and they exist solely so account deletion can revoke Sign in with Apple.
+
+do $$
+declare
+  alice uuid := (select v from _fixtures where k = 'alice');
+  admin uuid := (select v from _fixtures where k = 'admin');
+  blocked boolean;
+begin
+  insert into apple_credentials (user_id, refresh_token)
+  values (alice, 'apple-refresh-token-secret');
+
+  perform act_as(alice);
+  perform assert(
+    (select count(*) from apple_credentials) = 0,
+    'a user cannot read their own Apple refresh token');
+  reset role;
+
+  perform act_as(admin);
+  perform assert(
+    (select count(*) from apple_credentials) = 0,
+    'an admin cannot read anyone''s Apple refresh token');
+  reset role;
+
+  perform act_anonymous();
+  perform assert(
+    (select count(*) from apple_credentials) = 0,
+    'an anonymous client cannot read Apple refresh tokens');
+  reset role;
+
+  perform act_as(alice);
+  begin
+    insert into apple_credentials (user_id, refresh_token) values (alice, 'forged');
+    blocked := false;
+  exception when others then
+    blocked := true;
+  end;
+  perform assert(blocked, 'a user cannot write an Apple refresh token');
+  reset role;
+end
+$$;
+
 -- ── Data integrity constraints ──────────────────────────────────────────────
 
 do $$
@@ -336,7 +380,7 @@ $$;
 -- Fails loudly if assertions were skipped rather than passed.
 do $$
 declare ran integer := (select n from _assertions);
-declare expected constant integer := 30;
+declare expected constant integer := 34;
 begin
   if ran <> expected then
     raise exception 'Expected % assertions, only % ran. Tests were skipped.', expected, ran;

@@ -115,6 +115,21 @@ export async function signInWithApple(): Promise<SignInResult> {
         .then(undefined, () => undefined);
     }
 
+    // Hand Apple's single-use authorization code to the server so it can be
+    // exchanged for a refresh token. That token is the ONLY way to revoke the
+    // Sign in with Apple connection when the account is later deleted, which
+    // App Review requires (guideline 5.1.1(v)).
+    //
+    // The code expires in about five minutes and cannot be re-requested, so
+    // this has to happen now. It is awaited rather than fired and forgotten:
+    // if it fails, deletion will fail later, and we would rather know at
+    // sign-in than at the moment a user asks to be removed.
+    if (credential.authorizationCode) {
+      await registerAppleCredential(credential.authorizationCode);
+    } else {
+      console.warn('[auth] Apple returned no authorizationCode; deletion will not be able to revoke.');
+    }
+
     return { status: 'signed-in' };
   } catch (error) {
     if (isAppleCancellation(error)) return { status: 'cancelled' };
@@ -148,6 +163,27 @@ export async function signInWithGoogle(): Promise<SignInResult> {
   } catch (error) {
     if (isGoogleCancellation(error)) return { status: 'cancelled' };
     return { status: 'error', message: describeError(error) };
+  }
+}
+
+/**
+ * Exchanges Apple's authorization code for a stored refresh token.
+ *
+ * Deliberately non-fatal to sign-in: a reader who cannot reach this endpoint
+ * should still get into the app. It logs loudly because the consequence is
+ * deferred — the failure shows up later as an account that cannot be deleted.
+ */
+async function registerAppleCredential(authorizationCode: string): Promise<void> {
+  try {
+    const { data, error } = await supabase.functions.invoke<{ stored: boolean }>('apple-link', {
+      body: { authorizationCode },
+    });
+
+    if (error || !data?.stored) {
+      console.error('[auth] Could not store the Apple credential:', error?.message ?? 'not stored');
+    }
+  } catch (error) {
+    console.error('[auth] Could not store the Apple credential:', error);
   }
 }
 

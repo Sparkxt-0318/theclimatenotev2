@@ -8,6 +8,7 @@
  */
 
 import { Button } from '@/components/button';
+import { ScreenHeader } from '@/components/screen-header';
 import { Text } from '@/components/text';
 import { WeekCalendar } from '@/components/week-calendar';
 import { useAuth } from '@/features/auth';
@@ -45,19 +46,23 @@ export default function ImpactScreen() {
   if (!isSignedIn) {
     return (
       <View
-        style={[
-          styles.signedOut,
-          { backgroundColor: colors.background, paddingTop: insets.top + spacing.giant },
-        ]}
+        style={{
+          flex: 1,
+          backgroundColor: colors.background,
+          paddingTop: insets.top + spacing.lg,
+        }}
       >
-        <Text variant="largeTitle" serif center>
-          Your impact
-        </Text>
-        <Text variant="callout" tone="secondary" serif center>
-          Sign in to track the actions you commit to and see what they add up to
-          over a week.
-        </Text>
-        <Button label="Sign in" onPress={() => router.push('/sign-in')} />
+        {/* The header stays when signed out, so Settings — and with it the
+            privacy, terms and support links — is reachable without an account. */}
+        <ScreenHeader title="Your impact" />
+
+        <View style={styles.signedOut}>
+          <Text variant="callout" tone="secondary" serif center>
+            Sign in to track the actions you commit to and see what they add up
+            to over a week.
+          </Text>
+          <Button label="Sign in" onPress={() => router.push('/sign-in')} />
+        </View>
       </View>
     );
   }
@@ -82,11 +87,7 @@ export default function ImpactScreen() {
         paddingBottom: insets.bottom + spacing.giant,
       }}
     >
-      <View style={styles.header}>
-        <Text variant="largeTitle" serif>
-          Your impact
-        </Text>
-      </View>
+      <ScreenHeader title="Your impact" />
 
       <View style={[styles.hero, { backgroundColor: colors.brandSubtle }]}>
         <Text variant="overline" tone="brand" serif={false}>
@@ -175,8 +176,7 @@ export default function ImpactScreen() {
 
 const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  signedOut: { flex: 1, paddingHorizontal: gutter.screen, gap: spacing.lg },
-  header: { paddingHorizontal: gutter.screen, paddingBottom: spacing.xl },
+  signedOut: { paddingHorizontal: gutter.screen, gap: spacing.lg, paddingTop: spacing.xxxl },
   hero: {
     marginHorizontal: gutter.screen,
     padding: spacing.xxl,
