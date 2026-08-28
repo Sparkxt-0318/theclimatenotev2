@@ -44,3 +44,7 @@ coverage/
 
 # EAS submit credentials
 apps/mobile/private/
+
+# next
+apps/web/.next/
+apps/web/next-env.d.ts
