@@ -8,21 +8,41 @@
  * alone fails review.
  *
  * That revocation needs Apple credentials, which must never ship in a client
- * binary, so the work happens in a Supabase Edge Function. This module calls it
- * and then signs the device out.
+ * binary, so the work happens in a Supabase Edge Function. This module gathers
+ * a fresh Apple authorization code, calls the function, and signs the device
+ * out.
+ *
+ * Deletion is never blocked by a revocation problem. An account a user cannot
+ * delete is its own violation of the same guideline.
  */
 
 import { supabase } from '@/lib/supabase';
-import { signOut } from './native-sign-in';
+import { getFreshAppleAuthorizationCode, signOut } from './native-sign-in';
 
 export type DeletionResult = { ok: true } | { ok: false; message: string };
 
 export async function deleteAccount(): Promise<DeletionResult> {
   const { data: sessionData } = await supabase.auth.getSession();
-  if (!sessionData.session) return { ok: false, message: 'You are not signed in.' };
+  const session = sessionData.session;
+  if (!session) return { ok: false, message: 'You are not signed in.' };
 
-  const { data, error } = await supabase.functions.invoke<{ deleted: boolean }>('delete-account', {
+  // If this account was created with Apple, get a fresh authorization code so
+  // the server can revoke the Sign in with Apple connection. Re-authenticating
+  // before a destructive action is a familiar pattern, and it is the reliable
+  // way to obtain a revocable token.
+  //
+  // A null here — the reader cancelled, or Apple errored — does NOT stop the
+  // deletion. The server falls back to the token stored at sign-in, and
+  // deletes either way.
+  const usedApple = session.user.identities?.some((identity) => identity.provider === 'apple');
+  const appleAuthorizationCode = usedApple ? await getFreshAppleAuthorizationCode() : null;
+
+  const { data, error } = await supabase.functions.invoke<{
+    deleted: boolean;
+    appleRevocation?: string;
+  }>('delete-account', {
     method: 'POST',
+    body: appleAuthorizationCode ? { appleAuthorizationCode } : {},
   });
 
   if (error) {

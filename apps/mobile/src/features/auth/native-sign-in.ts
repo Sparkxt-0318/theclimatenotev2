@@ -187,6 +187,33 @@ async function registerAppleCredential(authorizationCode: string): Promise<void>
   }
 }
 
+/**
+ * Re-prompts Sign in with Apple purely to obtain a fresh authorization code.
+ *
+ * Used immediately before account deletion. Apple's authorization code is
+ * single-use and short-lived, so the one captured at sign-in may be long spent;
+ * asking again is the reliable way to get a token we can revoke with.
+ *
+ * This does NOT touch the Supabase session — the credential is used only for
+ * the code. Returns null if the reader cancels, which is not an error: deletion
+ * proceeds regardless, because a user who asked to be deleted gets deleted.
+ */
+export async function getFreshAppleAuthorizationCode(): Promise<string | null> {
+  try {
+    if (!(await AppleAuthentication.isAvailableAsync())) return null;
+
+    const credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [AppleAuthentication.AppleAuthenticationScope.EMAIL],
+    });
+    return credential.authorizationCode ?? null;
+  } catch (error) {
+    if (!isAppleCancellation(error)) {
+      console.error('[auth] Could not re-authenticate with Apple for deletion:', error);
+    }
+    return null;
+  }
+}
+
 export async function signOut(): Promise<void> {
   // Clear Google's own cached account too, or the next sign-in silently reuses
   // the previous account without showing the picker.

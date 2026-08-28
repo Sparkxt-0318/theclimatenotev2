@@ -11,7 +11,7 @@
  * Support inbox. MUST be an address that actually receives mail — a personal
  * Gmail account is perfectly acceptable to App Review.
  */
-export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? 'hello@theclimatenote.com';
+export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? 'theclimatenote@gmail.com';
 
 /** Where the site is deployed. The Vercel URL until a domain is pointed at it. */
 export const SITE_URL =

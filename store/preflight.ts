@@ -253,6 +253,52 @@ const checks: Check[] = [
     },
   },
   {
+    area: 'Auth',
+    name: 'nothing can block account deletion',
+    /**
+     * Deletion must always be possible. An earlier version refused to delete
+     * when Apple revocation was impossible, which stranded users with accounts
+     * they could never remove — a 5.1.1(v) violation by a different route than
+     * the one it was trying to avoid.
+     */
+    run: () => {
+      const fn = read('supabase/functions/delete-account/index.ts');
+
+      // Everything before the auth-user delete call is the pre-flight section;
+      // an early return with deleted:false in there is a blocking refusal.
+      const deleteCall = fn.indexOf('deleteUser(');
+      if (deleteCall === -1) return fail('the function no longer deletes the user');
+
+      const before = fn.slice(0, deleteCall);
+      const refusals = [...before.matchAll(/deleted:\s*false/g)];
+
+      return refusals.length === 0
+        ? pass('revocation is best-effort, deletion is unconditional')
+        : fail(
+            `${refusals.length} path(s) return deleted:false before deleting. ` +
+              `Revocation must never block deletion — an account a user cannot ` +
+              `delete violates 5.1.1(v) on its own.`,
+          );
+    },
+  },
+  {
+    area: 'Contact',
+    name: 'support address is a real mailbox',
+    run: () => {
+      const site = read('apps/web/src/lib/site.ts');
+      const match = /SUPPORT_EMAIL\s*=\s*[^?]*\?\?\s*'([^']+)'/.exec(site);
+      if (!match?.[1]) return fail('no default support address found');
+
+      const address = match[1];
+      const domain = address.split('@')[1] ?? '';
+      // theclimatenote.com does not resolve; a support address there receives
+      // nothing, and App Review opens the support page.
+      return domain === 'theclimatenote.com'
+        ? fail(`${address} is on a domain that does not resolve, so it receives no mail`)
+        : pass(address);
+    },
+  },
+  {
     area: 'Dependencies',
     name: 'lockfile is in sync (CI and Vercel use --frozen-lockfile)',
     run: () => {

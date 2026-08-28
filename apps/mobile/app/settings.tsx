@@ -33,7 +33,7 @@ export default function SettingsScreen() {
   function confirmDelete() {
     Alert.alert(
       'Delete your account?',
-      'This permanently removes your account, every note you have written and your whole impact history. It cannot be undone.',
+      'This permanently removes your account, every note you have written and your whole impact history. It cannot be undone.\n\nIf you signed in with Apple, you will be asked to confirm with Apple once more so we can fully disconnect it.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -102,8 +102,9 @@ export default function SettingsScreen() {
             />
             <Text variant="caption" tone="tertiary" serif={false} style={styles.dangerNote}>
               Deleting removes your account and all your data from our servers
-              straight away. If you signed in with Apple, we also revoke that
-              connection.
+              straight away. If you signed in with Apple, we also disconnect
+              that connection so the app stops appearing in your Apple ID
+              settings.
             </Text>
           </View>
         </View>

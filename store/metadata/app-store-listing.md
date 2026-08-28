@@ -129,6 +129,25 @@ HTTPS, which is exempt.
 
 ---
 
+## App Review Information
+
+App Store Connect requires a contact before it will let you submit. The email is
+set; the name and phone number are yours to fill in.
+
+| Field | Value |
+|---|---|
+| First name | *your first name* |
+| Last name | *your last name* |
+| Phone number | *a number you can be reached on* |
+| Email | `theclimatenote@gmail.com` |
+| Sign-in required | **No** — every article is readable without an account |
+
+Leave the demo-account fields empty. Reviewers do not need credentials, because
+nothing is gated. If you would rather give them one anyway, create a throwaway
+account with Apple and note it here.
+
+---
+
 ## Review notes
 
 Paste this into the App Review Information notes field.
@@ -149,7 +168,9 @@ Neither flow opens Safari, an SFSafariViewController, or any web view. The app n
 To see this: open the app, tap any article, scroll to "Write your climate note!", choose an option and tap "Sign in to save".
 
 ACCOUNT DELETION (guideline 5.1.1(v)):
-Tap the gear button at the top right of any tab (Read, Notes or Impact) to open Settings, then "Delete my account". This permanently deletes the account, every saved note and all history, and revokes the Sign in with Apple connection through Apple's REST revocation endpoint before deleting anything. The gear button is present whether or not you are signed in, so the privacy policy, terms and support links are reachable without an account.
+Tap the gear button at the top right of any tab (Read, Notes or Impact) to open Settings, then "Delete my account". The gear is present whether or not you are signed in, so the privacy policy, terms and support links are also reachable without an account.
+
+If the account was created with Sign in with Apple, you are asked to confirm once more with Apple. That step obtains a fresh authorization code, which we exchange and use to revoke the connection through Apple's REST revocation endpoint, so the app stops appearing under Settings -> Sign-In & Security -> Sign in with Apple. Declining that prompt does not block deletion — the account, every note and all history are removed either way.
 
 DEMO ACCOUNT:
 Not required, since all content is visible without signing in. If you would prefer one, we are happy to provide credentials.
