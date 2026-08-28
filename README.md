@@ -48,6 +48,23 @@ four things around it, each with a way to be wrong that we check for:
 
 Nothing reaches a reader without passing through the admin console.
 
+## Seeing it work before anything is set up
+
+Two commands, neither needing an account:
+
+```bash
+# The AI, on a real article. Free Gemini key only — no Supabase, no Drive.
+GEMINI_API_KEY=... pnpm --filter @climatenote/worker dry-run
+
+# The app itself, on sample data with no backend.
+EXPO_PUBLIC_DEMO=1 npx expo run:ios      # from apps/mobile, needs Xcode
+```
+
+The dry-run prints everything the pipeline produced — summary with its measured
+reading grade, the photo-or-figure decision, the chart and whether its numbers
+were verified against the article, and each reflection option with its grounding
+quote and grader scores, including the ones that were rejected.
+
 ## Getting started
 
 ```bash

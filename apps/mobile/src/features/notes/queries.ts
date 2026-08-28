@@ -10,6 +10,7 @@
 import { getFactor, toIsoDate, UNQUANTIFIED_KEY } from '@climatenote/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { DEMO_MODE, DEMO_NOTES } from '@/demo';
 import { useAuth } from '@/features/auth';
 import { supabase } from '@/lib/supabase';
 
@@ -37,8 +38,11 @@ export function useNotes() {
 
   return useQuery({
     queryKey: noteKeys.all,
-    enabled: isSignedIn,
+    // Demo mode has no account, so the query must not wait for one.
+    enabled: isSignedIn || DEMO_MODE,
     queryFn: async (): Promise<NoteRow[]> => {
+      if (DEMO_MODE) return DEMO_NOTES as unknown as NoteRow[];
+
       const { data, error } = await supabase
         .from('climate_notes')
         .select(

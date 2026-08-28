@@ -10,6 +10,7 @@ import { Button } from '@/components/button';
 import { PressableScale } from '@/components/pressable-scale';
 import { ScreenHeader } from '@/components/screen-header';
 import { Text } from '@/components/text';
+import { DEMO_MODE } from '@/demo';
 import { useAuth } from '@/features/auth';
 import { useCompleteNote, useNotes, useUncompleteNote, type NoteRow } from '@/features/notes/queries';
 import { gutter, radius, spacing, useTheme } from '@/theme';
@@ -28,7 +29,7 @@ export default function NotesScreen() {
   const uncomplete = useUncompleteNote();
   const today = toIsoDate(new Date());
 
-  if (!isSignedIn) {
+  if (!isSignedIn && !DEMO_MODE) {
     return (
       <View
         style={{

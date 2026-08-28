@@ -7,6 +7,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 
+import { DEMO_ARTICLES, DEMO_FULL_ARTICLE, DEMO_MODE } from '@/demo';
 import { supabase } from '@/lib/supabase';
 import type { ArticleListItem, FullArticle } from './types';
 
@@ -19,6 +20,8 @@ export function useArticleFeed() {
   return useQuery({
     queryKey: articleKeys.feed,
     queryFn: async (): Promise<ArticleListItem[]> => {
+      if (DEMO_MODE) return DEMO_ARTICLES as ArticleListItem[];
+
       // Reads the view rather than joining client-side, so the feed is one
       // round trip instead of an N+1 over assets.
       const { data, error } = await supabase
@@ -39,6 +42,8 @@ export function useArticle(slug: string) {
   return useQuery({
     queryKey: articleKeys.detail(slug),
     queryFn: async (): Promise<FullArticle> => {
+      if (DEMO_MODE) return DEMO_FULL_ARTICLE as unknown as FullArticle;
+
       const { data, error } = await supabase
         .from('articles')
         .select(

@@ -314,6 +314,33 @@ const checks: Check[] = [
     },
   },
   {
+    area: 'Build config',
+    name: 'demo mode cannot reach a release build',
+    /**
+     * Demo mode exists so the app can be seen before any backend does. Shipping
+     * it would put seeded numbers in front of real readers and show a reviewer
+     * an app that never talks to a server.
+     */
+    run: () => {
+      const easJson = read('apps/mobile/eas.json');
+      const config = JSON.parse(easJson) as {
+        build?: Record<string, { env?: Record<string, string> }>;
+      };
+
+      for (const profile of ['preview', 'production']) {
+        if (config.build?.[profile]?.env?.EXPO_PUBLIC_DEMO === '1') {
+          return fail(`the ${profile} build profile enables demo mode`);
+        }
+      }
+
+      // The environment this preflight runs in must not have it on either,
+      // since that is the environment a build would inherit.
+      return process.env.EXPO_PUBLIC_DEMO === '1'
+        ? fail('EXPO_PUBLIC_DEMO=1 is set in this environment; a build here would ship demo data')
+        : pass();
+    },
+  },
+  {
     area: 'Contact',
     name: 'support address is a real mailbox',
     run: () => {

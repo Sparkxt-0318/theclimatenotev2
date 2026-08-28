@@ -1,4 +1,6 @@
 import { ConfigurationError } from '@/components/configuration-error';
+import { DemoBanner } from '@/components/demo-banner';
+import { DEMO_MODE } from '@/demo';
 import { AuthProvider } from '@/features/auth';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { useTheme } from '@/theme';
@@ -25,7 +27,7 @@ export default function RootLayout() {
 
   // A build with no backend cannot show anything. Say so, rather than
   // rendering an app whose every request fails.
-  if (!isSupabaseConfigured) {
+  if (!isSupabaseConfigured && !DEMO_MODE) {
     return (
       <SafeAreaProvider>
         <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
@@ -40,6 +42,7 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+            <DemoBanner />
             <Stack
               screenOptions={{
                 headerShown: false,

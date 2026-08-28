@@ -5,14 +5,19 @@
  * with a clear message rather than halfway through processing an article.
  */
 
+export type AiProvider = 'gemini' | 'openai';
+
 export type WorkerConfig = {
   supabaseUrl: string;
   supabaseServiceKey: string;
   driveFolderId: string;
   googleServiceAccount: Record<string, unknown>;
-  openAiKey: string;
+  /** Which provider the pipeline talks to. Gemini unless told otherwise. */
+  aiProvider: AiProvider;
+  openAiKey: string | null;
   openAiModel: string;
   geminiKey: string | null;
+  geminiTextModel: string;
   geminiImageModel: string;
   unsplashKey: string | null;
   pexelsKey: string | null;
@@ -22,6 +27,32 @@ function required(name: string): string {
   const value = process.env[name];
   if (!value) throw new Error(`Missing required environment variable ${name}`);
   return value;
+}
+
+/**
+ * Picks the provider from an explicit setting, or from whichever key exists.
+ *
+ * Gemini wins a tie because its free tier costs nothing and the volume here is
+ * one article a week.
+ */
+function resolveProvider(): AiProvider {
+  const explicit = process.env.AI_PROVIDER?.toLowerCase();
+
+  if (explicit === 'gemini' || explicit === 'openai') {
+    const key = explicit === 'gemini' ? 'GEMINI_API_KEY' : 'OPENAI_API_KEY';
+    if (!process.env[key]) {
+      throw new Error(`AI_PROVIDER is set to ${explicit}, but ${key} is not set.`);
+    }
+    return explicit;
+  }
+
+  if (process.env.GEMINI_API_KEY) return 'gemini';
+  if (process.env.OPENAI_API_KEY) return 'openai';
+
+  throw new Error(
+    'No AI provider configured. Set GEMINI_API_KEY (free, no billing account needed — ' +
+      'get one at aistudio.google.com/apikey) or OPENAI_API_KEY.',
+  );
 }
 
 export function loadConfig(): WorkerConfig {
@@ -47,10 +78,16 @@ export function loadConfig(): WorkerConfig {
     supabaseServiceKey: required('SUPABASE_SERVICE_ROLE_KEY'),
     driveFolderId: required('GOOGLE_DRIVE_FOLDER_ID'),
     googleServiceAccount,
-    openAiKey: required('OPENAI_API_KEY'),
+    aiProvider: resolveProvider(),
+    // Neither key is required on its own — one of them is, which
+    // resolveProvider enforces with a message naming both options.
+    openAiKey: process.env.OPENAI_API_KEY ?? null,
     openAiModel: process.env.OPENAI_TEXT_MODEL ?? 'gpt-4.1-mini',
     geminiKey: process.env.GEMINI_API_KEY ?? null,
-    geminiImageModel: process.env.GEMINI_IMAGE_MODEL ?? 'gemini-2.5-flash-image',
+    // Pinned, not a -latest alias: Google's own guidance for production, and
+    // aliases move under you without warning.
+    geminiTextModel: process.env.GEMINI_TEXT_MODEL ?? 'gemini-3.7-flash',
+    geminiImageModel: process.env.GEMINI_IMAGE_MODEL ?? 'gemini-3.5-flash-image',
     unsplashKey: process.env.UNSPLASH_ACCESS_KEY ?? null,
     pexelsKey: process.env.PEXELS_API_KEY ?? null,
   };

@@ -11,6 +11,7 @@ import { Button } from '@/components/button';
 import { ScreenHeader } from '@/components/screen-header';
 import { Text } from '@/components/text';
 import { WeekCalendar } from '@/components/week-calendar';
+import { DEMO_MODE } from '@/demo';
 import { useAuth } from '@/features/auth';
 import {
   useImpactByCategory,
@@ -45,7 +46,7 @@ export default function ImpactScreen() {
   const streak = useStreak();
   const categories = useImpactByCategory();
 
-  if (!isSignedIn) {
+  if (!isSignedIn && !DEMO_MODE) {
     return (
       <View
         style={{
