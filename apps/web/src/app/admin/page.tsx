@@ -90,7 +90,7 @@ export default async function AdminPage() {
                 <strong>{job.source_name ?? 'unknown file'}</strong> — {job.state}
                 {job.state === 'running' ? ` (at ${job.step})` : ''}
                 {job.error ? (
-                  <p className="small" style={{ margin: '4px 0 0', color: '#b4553c' }}>
+                  <p className="small" style={{ margin: '4px 0 0', color: 'var(--danger)' }}>
                     {job.error}
                   </p>
                 ) : null}
@@ -152,7 +152,7 @@ function ArticleCard({ article }: { article: ArticleRow }) {
       </div>
 
       {warnings.length > 0 ? (
-        <p className="small" style={{ margin: '12px 0 0', color: '#b4553c' }}>
+        <p className="small" style={{ margin: '12px 0 0', color: 'var(--danger)' }}>
           Needs attention: {warnings.join(', ')}
         </p>
       ) : null}

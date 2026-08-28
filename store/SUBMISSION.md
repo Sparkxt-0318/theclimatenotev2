@@ -9,16 +9,26 @@ marked **automated** is already written and runs from the repository.
 
 ## 0. Before anything else
 
-**You** — send the logo, or the hex code. Everything else can proceed without
-it, but the icon and the palette are placeholders until it arrives, and both are
-a one-file swap:
+Done — the logo is in. Both ramps are sampled from it:
 
-- palette → `packages/shared/src/theme/colors.ts` (the `brand` ramp)
-- icon → `store/icon/generate.ts` (the `mark()` function)
+- `brand[300]` `#A6C49F`, the notebook cover
+- `neutral[700]` `#3B4347`, the wordmark slate
 
-After changing the palette, run `pnpm --filter @climatenote/shared test`. It
-fails if any text pairing drops below its contrast requirement, so a brand
-colour that would make text unreadable cannot ship silently.
+Each sits within 0.4 deltaE of the artwork, which is below what anyone can see.
+The app icon is the notebook mark redrawn for icon use.
+
+**If you have the exact brand hex values**, put them in
+`packages/shared/src/theme/colors.ts` and run
+`pnpm --filter @climatenote/shared test`. Mine were sampled from the supplied
+image, so they may be a shade off. That test fails if a change drops any text
+pairing below its contrast requirement, so a correction cannot silently make
+text unreadable.
+
+One thing worth knowing: the logo green is **1.9:1 against white**, where
+readable body text needs 4.5:1. It is used everywhere it is decorative — fills,
+the impact calendar, illustration — but links and buttons use `brand[600]`, a
+darker step of the same hue. In dark mode the logo colour clears 9.7:1, so the
+app uses your exact green there.
 
 ---
 

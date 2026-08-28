@@ -149,7 +149,7 @@ export default async function ReviewPage({ params }: Params) {
           {summary?.reading_grade ? (
             <span
               className="small"
-              style={{ color: summary.reading_grade > 9 ? '#b4553c' : 'var(--brand)' }}
+              style={{ color: summary.reading_grade > 9 ? 'var(--danger)' : 'var(--brand)' }}
             >
               reads at US grade {summary.reading_grade}
               {summary.reading_grade > 9 ? ' — above target' : ''}
@@ -168,13 +168,13 @@ export default async function ReviewPage({ params }: Params) {
       <section style={{ marginTop: 40 }}>
         <h2 style={{ fontSize: 18 }}>
           Reflection options{' '}
-          <span className="small" style={{ color: options.length < 3 ? '#b4553c' : undefined }}>
+          <span className="small" style={{ color: options.length < 3 ? 'var(--danger)' : undefined }}>
             {options.length}/3
           </span>
         </h2>
 
         {options.length < 3 ? (
-          <p className="small" style={{ color: '#b4553c' }}>
+          <p className="small" style={{ color: 'var(--danger)' }}>
             Fewer than three options met the quality bar. Rather than padding the
             set with something vague, the pipeline stopped — write the missing
             one yourself, or re-run after editing the article.
@@ -197,7 +197,7 @@ export default async function ReviewPage({ params }: Params) {
 
               <p className="small" style={{ margin: '0 0 6px' }}>
                 <strong>Grounded in:</strong>{' '}
-                <span style={{ color: grounded ? 'var(--text-secondary)' : '#b4553c' }}>
+                <span style={{ color: grounded ? 'var(--text-secondary)' : 'var(--danger)' }}>
                   “{option.source_span}”
                   {grounded ? '' : ' — NOT FOUND IN THE ARTICLE'}
                 </span>

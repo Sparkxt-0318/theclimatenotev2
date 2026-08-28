@@ -72,7 +72,7 @@ export function SignInForm() {
       />
 
       {error ? (
-        <p className="small" style={{ color: '#b4553c' }}>
+        <p className="small" style={{ color: 'var(--danger)' }}>
           {error}
         </p>
       ) : null}

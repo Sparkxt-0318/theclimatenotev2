@@ -22,63 +22,86 @@ import sharp from 'sharp';
 const SIZE = 1024;
 
 /**
- * The mark: a leaf whose central vein is also the rule of a written note —
- * the two halves of "climate" and "note".
+ * The mark: the spiral-bound notebook from the logo.
+ *
+ * Simplified for icon use. The logo renders the notebook in perspective with a
+ * fine wire coil and delicately fanned pages; at 60 x 60 on a home screen both
+ * would turn to mush. This keeps the silhouette — cover, darker spine band,
+ * bold coil, pages splaying up and right — and drops the detail that would not
+ * survive.
  */
-function mark(color: string, size = SIZE): string {
+function mark(size = SIZE): string {
   const s = (value: number) => (value * size) / 1024;
 
-  return `
-    <g transform="translate(${s(512)}, ${s(512)})">
-      <!-- Leaf body: two mirrored quadratic curves meeting at tip and base. -->
-      <path d="
-        M 0 ${s(-268)}
-        C ${s(78)} ${s(-208)}, ${s(178)} ${s(-78)}, ${s(178)} ${s(48)}
-        C ${s(178)} ${s(178)}, ${s(102)} ${s(258)}, 0 ${s(268)}
-        C ${s(-102)} ${s(258)}, ${s(-178)} ${s(178)}, ${s(-178)} ${s(48)}
-        C ${s(-178)} ${s(-78)}, ${s(-78)} ${s(-208)}, 0 ${s(-268)}
-        Z"
-        fill="${color}"/>
+  // Pages behind the cover, fanning up and to the right as in the logo.
+  const pages = [
+    { dx: 34, dy: -30, w: 300, h: 470, fill: brand[200], rotate: 3 },
+    { dx: 66, dy: -54, w: 262, h: 450, fill: brand[100], rotate: 6 },
+  ]
+    .map(
+      (page) => `
+      <g transform="rotate(${page.rotate} ${s(-40)} ${s(240)})">
+        <rect x="${s(-150 + page.dx)}" y="${s(-236 + page.dy)}"
+              width="${s(page.w)}" height="${s(page.h)}"
+              rx="${s(16)}" fill="${page.fill}"/>
+      </g>`,
+    )
+    .reverse()
+    .join('');
 
-      <!-- The vein, cut out so it reads as ruled lines on a page. -->
-      <path d="M 0 ${s(-196)} L 0 ${s(226)}"
-            stroke="${brand[600]}" stroke-width="${s(24)}" stroke-linecap="round"/>
-      ${[-84, 10, 104]
-        .map(
-          (y, index) => {
-            const reach = [96, 116, 96][index] ?? 100;
-            const rise = [64, 72, 60][index] ?? 64;
-            return `
-      <path d="M 0 ${s(y)} L ${s(reach)} ${s(y - rise)}"
-            stroke="${brand[600]}" stroke-width="${s(19)}" stroke-linecap="round"/>
-      <path d="M 0 ${s(y)} L ${s(-reach)} ${s(y - rise)}"
-            stroke="${brand[600]}" stroke-width="${s(19)}" stroke-linecap="round"/>`;
-          },
-        )
-        .join('')}
+  // The coil. Six bold loops rather than the logo's finer wire, so the binding
+  // still reads at small sizes.
+  const coil = Array.from({ length: 6 }, (_, index) => {
+    const y = -186 + index * 76;
+    return `
+      <path d="M ${s(-206)} ${s(y)} q ${s(34)} ${s(-26)} ${s(66)} 0"
+            fill="none" stroke="${brand[700]}" stroke-width="${s(19)}" stroke-linecap="round"/>`;
+  }).join('');
+
+  return `
+    <!-- 1.3, not larger: iOS masks the icon to a squircle, and at 1.4 the
+         top-right page corner fell inside the region the mask cuts away. -->
+    <g transform="translate(${s(500)}, ${s(516)}) scale(1.3)">
+      ${pages}
+
+      <!-- Front cover -->
+      <rect x="${s(-186)}" y="${s(-240)}" width="${s(340)}" height="${s(500)}"
+            rx="${s(20)}" fill="${brand[300]}"/>
+
+      <!-- Spine band, the darker left face from the logo -->
+      <path d="M ${s(-186)} ${s(-220)} a ${s(20)} ${s(20)} 0 0 1 ${s(20)} ${s(-20)}
+               l ${s(66)} 0 l 0 ${s(500)} l ${s(-66)} 0
+               a ${s(20)} ${s(20)} 0 0 1 ${s(-20)} ${s(-20)} Z"
+            fill="${brand[500]}"/>
+
+      ${coil}
+
+      <!-- The label rule on the cover -->
+      <rect x="${s(-46)} " y="${s(-56)}" width="${s(158)}" height="${s(26)}"
+            rx="${s(13)}" fill="${brand[50]}"/>
     </g>`;
 }
 
 function iconSvg(): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}">
     <defs>
-      <linearGradient id="bg" x1="0" y1="0" x2="0.35" y2="1">
-        <stop offset="0%" stop-color="${brand[500]}"/>
-        <stop offset="100%" stop-color="${brand[700]}"/>
+      <linearGradient id="bg" x1="0" y1="0" x2="0.4" y2="1">
+        <stop offset="0%" stop-color="${neutral[0]}"/>
+        <stop offset="100%" stop-color="${brand[50]}"/>
       </linearGradient>
     </defs>
     <rect width="${SIZE}" height="${SIZE}" fill="url(#bg)"/>
-    ${mark(neutral[0])}
+    ${mark()}
   </svg>`;
 }
 
-function splashSvg(background: string, markColor: string): string {
+function splashSvg(background: string): string {
   const width = 1284;
   const height = 2778;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
     <rect width="${width}" height="${height}" fill="${background}"/>
-    <g transform="translate(${(width - 320) / 2}, ${(height - 320) / 2}) scale(${320 / 1024})">
-      ${mark(markColor)}
+    <g transform="translate(${(width - 300) / 2}, ${(height - 300) / 2}) scale(${300 / 1024})">
+      ${mark()}
     </g>
   </svg>`;
 }
@@ -92,18 +115,18 @@ async function main(): Promise<void> {
   // App Store icon: flattened onto an opaque background because an alpha
   // channel is rejected at upload.
   const icon = await sharp(Buffer.from(iconSvg()))
-    .flatten({ background: brand[600] })
+    .flatten({ background: neutral[0] })
     .png({ compressionLevel: 9 })
     .toBuffer();
 
   await sharp(icon).toFile(join(assets, 'icon.png'));
   await sharp(icon).toFile(join(storeDir, 'app-icon-1024.png'));
 
-  await sharp(Buffer.from(splashSvg(neutral[0], brand[500])))
+  await sharp(Buffer.from(splashSvg(neutral[0])))
     .png()
     .toFile(join(assets, 'splash.png'));
 
-  await sharp(Buffer.from(splashSvg('#0D0D08', brand[300])))
+  await sharp(Buffer.from(splashSvg(neutral[950])))
     .png()
     .toFile(join(assets, 'splash-dark.png'));
 

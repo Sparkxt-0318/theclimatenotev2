@@ -25,7 +25,7 @@ function Status({ message }: { message: string | null }) {
   if (!message) return null;
   const failed = message.startsWith('Could not');
   return (
-    <p className="small" style={{ margin: '8px 0 0', color: failed ? '#b4553c' : 'var(--brand)' }}>
+    <p className="small" style={{ margin: '8px 0 0', color: failed ? 'var(--danger)' : 'var(--brand)' }}>
       {message}
     </p>
   );

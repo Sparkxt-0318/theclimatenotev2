@@ -59,7 +59,7 @@ function page(screen: (typeof SCREENS)[number]): string {
   .caption h1 { font-size:33px; line-height:41px; font-weight:700; letter-spacing:-0.6px;
                 color:${neutral[900]}; text-wrap:balance; }
   .caption h2 { font-size:33px; line-height:41px; font-weight:700; letter-spacing:-0.6px;
-                color:${brand[500]}; text-wrap:balance; }
+                color:${brand[600]}; text-wrap:balance; }
   .device { position:absolute; top:${FRAME.deviceTop}px; left:${deviceInset}px;
             width:${deviceWidth}px; height:${deviceHeight}px;
             border-radius:44px; overflow:hidden;

@@ -23,7 +23,7 @@ export default async function AdminSignInPage({
       <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 28 }}>Editor sign-in</h1>
 
       {denied ? (
-        <p className="small" style={{ color: '#b4553c' }}>
+        <p className="small" style={{ color: 'var(--danger)' }}>
           That account is not an editor. Ask an existing editor to grant access.
         </p>
       ) : null}

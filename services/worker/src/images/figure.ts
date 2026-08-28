@@ -51,6 +51,15 @@ export async function renderFigure(spec: FigureSpec): Promise<RenderedFigure> {
   const xIsCategorical = spec.series.some((s) => s.points.some((p) => typeof p.x === 'string'));
   const multiSeries = spec.series.length > 1;
 
+  // Years and counts are integers, and Vega's default quantitative axis renders
+  // them as "2,019.0". Detect a whole-number axis and format it as integers
+  // with a minimum step of 1, so ticks land on real values.
+  const xIsWholeNumbers =
+    !xIsCategorical &&
+    spec.series.every((series) =>
+      series.points.every((point) => typeof point.x === 'number' && Number.isInteger(point.x)),
+    );
+
   const vegaLiteSpec: vegaLite.TopLevelSpec = {
     $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
     width: WIDTH - 160,
@@ -81,7 +90,12 @@ export async function renderFigure(spec: FigureSpec): Promise<RenderedFigure> {
         // in a chart whose entire point is that beef towers over everything.
         // The model is instructed to supply a meaningful order; honour it.
         sort: xIsCategorical ? null : undefined,
-        axis: { labelFontSize: 16, titleFontSize: 17, labelAngle: xIsCategorical ? -30 : 0 },
+        axis: {
+          labelFontSize: 16,
+          titleFontSize: 17,
+          labelAngle: xIsCategorical ? -30 : 0,
+          ...(xIsWholeNumbers ? { format: 'd', tickMinStep: 1 } : {}),
+        },
       },
       y: {
         field: 'y',
@@ -94,7 +108,14 @@ export async function renderFigure(spec: FigureSpec): Promise<RenderedFigure> {
             color: {
               field: 'series',
               type: 'nominal',
-              scale: { range: [...chartSeriesLight] },
+              scale: {
+                // An explicit domain in data order. Without it Vega sorts the
+                // series alphabetically, so the palette's first colour lands on
+                // whichever name happens to sort first rather than on the
+                // series the author put first.
+                domain: spec.series.map((series) => series.name),
+                range: [...chartSeriesLight],
+              },
               legend: { labelFontSize: 16, titleFontSize: 0, orient: 'top', title: null },
             },
           }

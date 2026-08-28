@@ -15,6 +15,7 @@ import {
   articleTextStyles,
   brand,
   calendarScaleLight,
+  chartSeriesLight,
   lightColors as c,
   radius,
   spacing,
@@ -372,9 +373,9 @@ export function impactScreen(): string {
   ];
 
   const categories = [
-    { label: 'Food', value: '34 kg', width: 100, color: brand[500] },
-    { label: 'Getting around', value: '9 kg', width: 27, color: '#1867B7' },
-    { label: 'Waste', value: '4 kg', width: 12, color: '#AE7502' },
+    { label: 'Food', value: '34 kg', width: 100, color: chartSeriesLight[0] },
+    { label: 'Getting around', value: '9 kg', width: 27, color: chartSeriesLight[1] },
+    { label: 'Waste', value: '4 kg', width: 12, color: chartSeriesLight[2] },
   ];
 
   return shell(`
