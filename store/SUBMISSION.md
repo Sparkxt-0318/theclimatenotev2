@@ -122,7 +122,16 @@ Then:
 2. Keys → create a key with **Sign in with Apple** enabled. Download the `.p8`.
    **It downloads once and cannot be downloaded again.**
 3. Note your Team ID (top right of the portal) and the Key ID.
-4. Configure the same values in Supabase → Authentication → Providers → Apple.
+4. Supabase → Authentication → Providers → Apple: enable it and put the **bundle
+   ID** `com.theclimatenote.app` in the authorised client IDs. That is all
+   Supabase needs.
+
+   **Do not paste the `.p8` into that form.** The app signs in with
+   `signInWithIdToken`, so Supabase only ever validates the token's audience —
+   it never performs the web OAuth exchange that a client secret is for. The
+   private key is read solely by our own Edge Function
+   (`supabase/functions/_shared/apple.ts`, from `Deno.env`) to revoke the
+   connection at deletion, so it belongs in Function Secrets and nowhere else.
 
 Then set the Apple secrets and deploy BOTH functions. `apple-link` captures the
 refresh token at sign-in; `delete-account` revokes it. Deploy both: deletion
