@@ -188,9 +188,13 @@ PEXELS_API_KEY                  (optional)
 OPENAI_API_KEY                  (only if you chose OpenAI over Gemini)
 ```
 
-**Automated** — from then on the pipeline checks Drive every 30 minutes, drafts
-each new document, and waits for you in the admin console. Nothing publishes
-itself.
+**Automated, once you turn it back on** — the workflow's 30-minute schedule is
+currently disabled in `.github/workflows/ingest.yml`, because every run failed
+without these secrets. After setting them, uncomment the `schedule:` block the
+file points to (or run it manually with the "Run workflow" button, or the admin
+console's "Run now", to confirm it works first). From then on the pipeline
+checks Drive every 30 minutes, drafts each new document, and waits for you in
+the admin console. Nothing publishes itself.
 
 ---
 

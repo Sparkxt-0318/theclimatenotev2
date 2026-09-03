@@ -8,11 +8,11 @@
 name: Ingest articles
 
 on:
-  schedule:
-    # Every 30 minutes. A weekly publication does not need this, but it means an
-    # editor who drops a file in Drive sees a draft within half an hour rather
-    # than waiting for a daily run.
-    - cron: '*/30 * * * *'
+  # The 30-minute cron is paused until Supabase/Drive/AI secrets exist — every
+  # scheduled run fails otherwise, which is all it has ever done. Restore it
+  # once those secrets are set (store/SUBMISSION.md §4) by adding back:
+  #   schedule:
+  #     - cron: '*/30 * * * *'
   workflow_dispatch:
   repository_dispatch:
     # Fired by the admin console's "Run now" button.
